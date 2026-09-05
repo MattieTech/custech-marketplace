@@ -7,6 +7,9 @@ import {
   HelpCircle, ShieldCheck, ChevronDown, RotateCcw, ExternalLink
 } from 'lucide-react';
 
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+
 interface ChatMessage {
   id: string;
   role: 'assistant' | 'user';
@@ -15,6 +18,8 @@ interface ChatMessage {
 }
 
 export function AiSupportChatbot() {
+  const pathname = usePathname();
+  const isDashboardOrChat = pathname?.startsWith('/dashboard') || pathname?.startsWith('/messages') || pathname?.startsWith('/admin');
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -125,7 +130,7 @@ export function AiSupportChatbot() {
       {/* Floating Pill Trigger Button - Matches exact user screenshot sample */}
       <aside 
         aria-label="AI Customer Support Assistance"
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 flex items-center gap-2"
+        className={cn("fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 flex items-center gap-2", isDashboardOrChat && "hidden md:flex")}
       >
         <button
           type="button"

@@ -15,10 +15,14 @@ import {
   ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
 
 export function CampusSecuritySOS() {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
+  const isDashboardOrChat = pathname?.startsWith('/dashboard') || pathname?.startsWith('/messages') || pathname?.startsWith('/admin')
 
   const emergencyContacts = [
     {
@@ -60,7 +64,7 @@ export function CampusSecuritySOS() {
       {/* Floating SOS Action Button on bottom-left to avoid colliding with AI Support on bottom-right */}
       <aside 
         aria-label="Campus emergency assistance"
-        className="fixed bottom-20 left-4 md:bottom-6 md:left-6 z-40"
+        className={cn("fixed bottom-20 left-4 md:bottom-6 md:left-6 z-40", isDashboardOrChat && "hidden md:block")}
       >
         <button
           type="button"

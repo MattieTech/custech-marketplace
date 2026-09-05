@@ -25,7 +25,11 @@ import {
   ChevronRight, 
   ShieldAlert, 
   Share2,
-  Building2
+  Building2,
+  ShoppingBag,
+  TrendingUp,
+  Wallet,
+  LayoutDashboard
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -181,15 +185,15 @@ export function Header() {
 
       {/* Mobile Slide-Over Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
+        <div className="fixed inset-0 z-[70] md:hidden flex">
           {/* Backdrop Blur Overlay */}
           <div 
-            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
             onClick={() => setMobileMenuOpen(false)}
           />
 
           {/* Drawer Panel */}
-          <div className="relative w-4/5 max-w-sm bg-white border-r border-slate-200 h-full shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-left duration-300 overflow-y-auto">
+          <div className="relative w-4/5 max-w-sm bg-white border-r border-slate-200 h-full shadow-2xl flex flex-col justify-between z-[75] animate-in slide-in-from-left duration-300 overflow-y-auto">
             <div className="p-5 space-y-5">
               {/* Drawer Header */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -355,7 +359,7 @@ export function Header() {
               {user && (
                 <div className="space-y-1 pt-2 border-t border-slate-100">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
-                    My Account
+                    My Dashboard & Account
                   </p>
 
                   <Link
@@ -364,8 +368,74 @@ export function Header() {
                     className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800"
                   >
                     <div className="flex items-center gap-2.5">
-                      <User className="w-4 h-4 text-slate-500" />
-                      <span>User Dashboard</span>
+                      <LayoutDashboard className="w-4 h-4 text-emerald-600" />
+                      <span>Overview Dashboard</span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/listings"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <ShoppingBag className="w-4 h-4 text-blue-600" />
+                      <span>My Listings</span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/analytics"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <TrendingUp className="w-4 h-4 text-purple-600" />
+                      <span>Sales Analytics</span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/messages"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <MessageCircle className="w-4 h-4 text-cyan-600" />
+                      <span>Messages</span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/notifications"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Bell className="w-4 h-4 text-amber-500" />
+                      <span>Notifications</span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/wallet"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Wallet className="w-4 h-4 text-emerald-600" />
+                      <span>Student Wallet</span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/verification"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-blue-600" />
+                      <span>ID Verification</span>
                     </div>
                   </Link>
 

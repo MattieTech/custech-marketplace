@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
   Briefcase, 
-  House, 
   MessageCircle, 
   Bell, 
   Wallet, 
@@ -16,44 +16,38 @@ import {
   Settings,
   TrendingUp,
   LogOut,
-  Menu,
-  X
-} from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { BRAND_NAME } from '@/lib/constants'
-import { cn } from '@/lib/utils'
+} from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const supabase = createClient()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  
-  const [user, setUser] = useState<any>(null)
+  const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Fetch profile
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-        setUser({ ...user, profile })
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        setUser({ ...user, profile });
       }
-    }
-    getUser()
-  }, [supabase])
+    };
+    getUser();
+  }, [supabase]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-  }
+    await supabase.auth.signOut();
+    router.push('/');
+  };
 
   const navLinks: { name: string; href: string; icon: any; comingSoon?: boolean }[] = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { name: 'My Listings', href: '/dashboard/listings', icon: ShoppingBag },
     { name: 'Analytics', href: '/dashboard/analytics', icon: TrendingUp },
     { name: 'Messages', href: '/messages', icon: MessageCircle },
@@ -62,134 +56,140 @@ export default function DashboardLayout({
     { name: 'Referrals', href: '/dashboard/referrals', icon: Users },
     { name: 'Verification', href: '/dashboard/verification', icon: ShieldCheck },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-  ]
-
-  const Sidebar = () => (
-    <div className="flex h-full flex-col overflow-y-auto bg-white border-r border-gray-200 w-64 pt-5 pb-4">
-      <div className="flex flex-shrink-0 items-center px-4 mb-5">
-        <Link href="/" className="text-xl font-bold text-green-600 tracking-tight">
-          {BRAND_NAME || 'CUSTECH Marketplace'}
-        </Link>
-      </div>
-      
-      {user && (
-        <div className="px-4 mb-6">
-          <div className="flex items-center">
-            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-              {user.profile?.avatar_url ? (
-                <img src={user.profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-gray-500 font-medium text-sm">
-                  {user.profile?.display_name?.charAt(0) || user.email?.charAt(0) || 'U'}
-                </span>
-              )}
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900 truncate max-w-[140px]">
-                {user.profile?.display_name || 'User'}
-              </p>
-              <div className="flex items-center">
-                {user.profile?.is_verified && (
-                  <span className="inline-flex items-center rounded-full bg-green-100 px-2 text-xs font-medium text-green-800">
-                    Verified
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <nav className="mt-2 flex-1 space-y-1 px-2">
-        {navLinks.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.name}
-              href={item.comingSoon ? '#' : item.href}
-              className={cn(
-                isActive ? 'bg-green-50 text-green-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-                'group flex items-center px-2 py-2 text-sm font-medium rounded-md'
-              )}
-            >
-              <item.icon
-                className={cn(
-                  isActive ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-500',
-                  'mr-3 flex-shrink-0 h-5 w-5'
-                )}
-                aria-hidden="true"
-              />
-              {item.name}
-              {item.comingSoon && (
-                <span className="ml-auto inline-block py-0.5 px-2 text-[10px] rounded-full bg-gray-100 text-gray-600">
-                  Soon
-                </span>
-              )}
-            </Link>
-          )
-        })}
-      </nav>
-      
-      <div className="flex-shrink-0 flex border-t border-gray-200 p-4 mt-auto">
-        <button
-          onClick={handleSignOut}
-          className="flex-shrink-0 group block w-full flex items-center text-gray-600 hover:text-gray-900"
-        >
-          <LogOut className="inline-block h-5 w-5 mr-3 text-gray-400 group-hover:text-gray-500" />
-          <span className="text-sm font-medium">Sign Out</span>
-        </button>
-      </div>
-    </div>
-  )
+  ];
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-50">
-      {/* Mobile sidebar */}
-      <div className={cn("fixed inset-0 flex z-40 md:hidden", isMobileMenuOpen ? "block" : "hidden")}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" aria-hidden="true" onClick={() => setIsMobileMenuOpen(false)}></div>
-        <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
-          <div className="absolute top-0 right-0 -mr-12 pt-2">
-            <button
-              type="button"
-              className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <span className="sr-only">Close sidebar</span>
-              <X className="h-6 w-6 text-white" aria-hidden="true" />
-            </button>
-          </div>
-          <Sidebar />
-        </div>
-      </div>
-
-      {/* Desktop sidebar */}
-      <div className="hidden md:flex md:flex-shrink-0">
-        <Sidebar />
-      </div>
-      
-      {/* Main content */}
-      <div className="flex flex-col w-0 flex-1 overflow-hidden">
-        <div className="md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 flex border-b bg-white">
-          <button
-            type="button"
-            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <span className="sr-only">Open sidebar</span>
-            <Menu className="h-6 w-6" aria-hidden="true" />
-          </button>
-          <div className="flex-1 flex justify-center items-center pr-12">
-            <span className="text-lg font-bold text-green-600 tracking-tight">{BRAND_NAME || 'CUSTECH'}</span>
-          </div>
-        </div>
-        <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              {children}
+    <div className="min-h-[calc(100vh-4rem)] flex bg-slate-50/60">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex md:w-64 md:flex-col md:flex-shrink-0 bg-white border-r border-slate-200/80">
+        <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
+          {/* Logo & Platform Info */}
+          <div className="flex items-center gap-2.5 px-5 mb-6">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 p-1 flex items-center justify-center border border-emerald-200">
+              <Image
+                src="/logo.png"
+                alt="CUSTECH Logo"
+                width={28}
+                height={28}
+                className="object-contain"
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-base font-black text-emerald-600 tracking-tight leading-none">
+                CUSTECH
+              </span>
+              <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase mt-0.5">
+                Marketplace Dashboard
+              </span>
             </div>
           </div>
+
+          {/* User Profile Card */}
+          {user && (
+            <div className="px-4 mb-5">
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white font-bold text-sm flex items-center justify-center shadow-xs shrink-0 overflow-hidden">
+                  {user.profile?.avatar_url ? (
+                    <img src={user.profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{user.profile?.display_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}</span>
+                  )}
+                </div>
+                <div className="truncate">
+                  <p className="text-xs font-bold text-slate-800 truncate">
+                    {user.profile?.display_name || 'Campus Student'}
+                  </p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {user.profile?.is_verified ? (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-emerald-50 border border-emerald-200 text-[9px] font-semibold text-emerald-700">
+                        <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
+                        <span>Verified</span>
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        Student Account
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Items */}
+          <nav className="flex-1 px-3 space-y-1">
+            {navLinks.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.comingSoon ? '#' : item.href}
+                  className={cn(
+                    "group flex items-center px-3 py-2.5 text-xs font-bold rounded-xl transition-all",
+                    isActive 
+                      ? "bg-emerald-500 text-white shadow-xs" 
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  )}
+                >
+                  <item.icon
+                    className={cn(
+                      "mr-3 h-4 w-4 flex-shrink-0 transition-colors",
+                      isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"
+                    )}
+                  />
+                  <span>{item.name}</span>
+                  {item.comingSoon && (
+                    <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-600 font-semibold">
+                      Soon
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Sign Out Button */}
+          <div className="border-t border-slate-100 p-4 mt-auto">
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex flex-col flex-1 min-w-0">
+        {/* Mobile Horizontal Tabs - Fast 1-Tap Switching (Eliminates Double Header) */}
+        <div className="md:hidden sticky top-14 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 py-2 overflow-x-auto flex items-center gap-1.5 scrollbar-none shadow-2xs">
+          {navLinks.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                href={item.comingSoon ? '#' : item.href}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0",
+                  isActive
+                    ? "bg-emerald-500 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95"
+                )}
+              >
+                <item.icon className={cn("w-3.5 h-3.5", isActive ? "text-white" : "text-slate-500")} />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Dashboard Page Body with Safe Bottom Padding */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-32 sm:pb-16 max-w-7xl w-full mx-auto">
+          {children}
         </main>
       </div>
     </div>
-  )
+  );
 }

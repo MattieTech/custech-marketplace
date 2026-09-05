@@ -26,19 +26,19 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28 sm:pb-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Welcome back, {displayName}!</h1>
-        <p className="text-sm text-gray-500 mt-1">Here's what's happening with your account today.</p>
+        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Welcome back, {displayName}!</h1>
+        <p className="text-sm text-slate-500 mt-1 font-medium">Here's what's happening with your account today.</p>
       </div>
 
       <div>
-        <dl className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((item) => (
-            <Card key={item.name} className="overflow-hidden shadow-sm">
-              <CardContent className="p-5">
-                <dt className="truncate text-sm font-medium text-gray-500">{item.name}</dt>
-                <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{item.stat}</dd>
+            <Card key={item.name} className="overflow-hidden shadow-xs border-slate-200/90 rounded-2xl bg-white">
+              <CardContent className="p-4 sm:p-5">
+                <dt className="truncate text-xs font-semibold text-slate-500 uppercase tracking-wider">{item.name}</dt>
+                <dd className="mt-1.5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900">{item.stat}</dd>
               </CardContent>
             </Card>
           ))}
@@ -46,35 +46,35 @@ export default async function DashboardPage() {
       </div>
 
       <div>
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Button asChild variant="outline" className="h-auto py-4 flex flex-col items-center justify-center space-y-2 border-dashed border-2 hover:border-green-500 hover:text-green-600">
+        <h2 className="text-base sm:text-lg font-bold text-slate-900 mb-3 tracking-tight">Quick Actions</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Button asChild variant="outline" className="h-auto py-4 flex flex-col items-center justify-center space-y-2 border-dashed border-2 border-slate-200 hover:border-emerald-500 hover:text-emerald-600 rounded-2xl bg-white transition-all shadow-2xs">
             <Link href="/dashboard/listings/new">
-              <PlusCircle className="h-6 w-6" />
-              <span>Create Listing</span>
+              <PlusCircle className="h-6 w-6 text-emerald-600" />
+              <span className="font-bold text-xs">Create Listing</span>
             </Link>
           </Button>
           
-          <Button asChild variant="outline" className="h-auto py-4 flex flex-col items-center justify-center space-y-2">
+          <Button asChild variant="outline" className="h-auto py-4 flex flex-col items-center justify-center space-y-2 border-slate-200 hover:border-emerald-300 rounded-2xl bg-white transition-all shadow-2xs">
             <Link href="/messages">
-              <MessageSquare className="h-6 w-6 text-gray-400" />
-              <span>View Messages</span>
+              <MessageSquare className="h-6 w-6 text-slate-400" />
+              <span className="font-bold text-xs">View Messages</span>
             </Link>
           </Button>
           
           {!isVerified && (
-            <Button asChild variant="outline" className="h-auto py-4 flex flex-col items-center justify-center space-y-2">
+            <Button asChild variant="outline" className="h-auto py-4 flex flex-col items-center justify-center space-y-2 border-slate-200 hover:border-emerald-300 rounded-2xl bg-white transition-all shadow-2xs">
               <Link href="/dashboard/verification">
-                <ShieldCheck className="h-6 w-6 text-gray-400" />
-                <span>Get Verified</span>
+                <ShieldCheck className="h-6 w-6 text-slate-400" />
+                <span className="font-bold text-xs">Get Verified</span>
               </Link>
             </Button>
           )}
 
-          <Button asChild variant="outline" className="h-auto py-4 flex flex-col items-center justify-center space-y-2">
+          <Button asChild variant="outline" className="h-auto py-4 flex flex-col items-center justify-center space-y-2 border-slate-200 hover:border-emerald-300 rounded-2xl bg-white transition-all shadow-2xs">
             <Link href="/marketplace">
-              <ShoppingBag className="h-6 w-6 text-gray-400" />
-              <span>View Marketplace</span>
+              <ShoppingBag className="h-6 w-6 text-slate-400" />
+              <span className="font-bold text-xs">View Marketplace</span>
             </Link>
           </Button>
         </div>
