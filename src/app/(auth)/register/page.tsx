@@ -221,7 +221,7 @@ function RegisterForm() {
 
   return (
     <Card className="w-full border-slate-200/80 bg-white shadow-sm rounded-3xl overflow-hidden">
-      <div className="h-1.5 bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-500" />
+      <div className="h-1.5 bg-emerald-500" />
       <CardHeader className="space-y-1.5 text-center pb-4 pt-6">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold mx-auto">
           <Sparkles className="w-3.5 h-3.5" />
@@ -397,7 +397,7 @@ function RegisterForm() {
           {/* Submit button */}
           <Button 
             type="submit" 
-            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold rounded-xl shadow-xs transition-all mt-3" 
+            className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-white font-bold rounded-xl shadow-xs transition-all mt-3" 
             disabled={loading || (usernameStatus.checked && !usernameStatus.available)}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

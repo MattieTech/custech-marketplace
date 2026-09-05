@@ -47,44 +47,65 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full border-gray-200 shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
-        <CardDescription className="text-center">
-          Sign in to your CUSTECH Marketplace account
+    <Card className="w-full border-slate-200/80 bg-white shadow-sm rounded-3xl overflow-hidden">
+      <div className="h-1.5 bg-emerald-500" />
+      <CardHeader className="space-y-1.5 text-center pb-2 pt-6">
+        <CardTitle className="text-2xl font-black text-slate-900 tracking-tight">Welcome Back</CardTitle>
+        <CardDescription className="text-xs text-slate-500">
+          Sign in to your verified CUSTECH student account
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <form onSubmit={onSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+            <div className="p-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl font-medium">
               {error}
             </div>
           )}
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Email</label>
-            <Input id="email" name="email" type="email" placeholder="student@custech.edu.ng" required disabled={loading} />
+          <div className="space-y-1.5">
+            <label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase tracking-wider">Email Address</label>
+            <Input 
+              id="email" 
+              name="email" 
+              type="email" 
+              placeholder="student@custech.edu.ng" 
+              required 
+              disabled={loading} 
+              className="h-11 rounded-xl bg-slate-50 border-slate-200 text-slate-900 focus:ring-2 focus:ring-emerald-500"
+            />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Password</label>
-              <Link href="/forgot-password" className="text-sm text-green-600 hover:underline">
+              <label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase tracking-wider">Password</label>
+              <Link href="/forgot-password" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline">
                 Forgot password?
               </Link>
             </div>
-            <Input id="password" name="password" type="password" required disabled={loading} />
+            <Input 
+              id="password" 
+              name="password" 
+              type="password" 
+              placeholder="••••••••" 
+              required 
+              disabled={loading} 
+              className="h-11 rounded-xl bg-slate-50 border-slate-200 text-slate-900 focus:ring-2 focus:ring-emerald-500"
+            />
           </div>
-          <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white" disabled={loading}>
+          <Button 
+            type="submit" 
+            className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-xs transition-all mt-2" 
+            disabled={loading}
+          >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign In
+            Sign In to CUSTECH
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center border-t p-4">
-        <p className="text-sm text-gray-500">
+      <CardFooter className="flex justify-center border-t border-slate-100 p-4 bg-slate-50/50">
+        <p className="text-xs text-slate-500">
           Don't have an account?{' '}
-          <Link href="/register" className="text-green-600 hover:underline font-medium">
-            Create one
+          <Link href="/register" className="text-emerald-600 hover:underline font-bold">
+            Create an account
           </Link>
         </p>
       </CardFooter>
