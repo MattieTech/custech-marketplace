@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+
+:root {
+  --color-custech-green: #22c55e;
+  --color-custech-emerald: #059669;
+  --color-custech-dark: #0f172a;
+  --color-custech-charcoal: #334155;
+  
+  /* iOS 18 Liquid Springs */
+  --liquid-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --liquid-spring-bouncy: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@layer base {
+  body {
+    @apply bg-[#f8fafc] text-slate-900 antialiased selection:bg-emerald-500 selection:text-white;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* iOS 18 Liquid Glass System */
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.76);
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 
+      0 10px 30px -5px rgba(0, 0, 0, 0.04),
+      0 4px 12px -2px rgba(0, 0, 0, 0.02),
+      inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95);
+  }
+
+  .liquid-glass-elevated {
+    background: rgba(255, 255, 255, 0.84);
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 
+      0 20px 45px -10px rgba(0, 0, 0, 0.07),
+      0 8px 20px -4px rgba(0, 0, 0, 0.03),
+      inset 0 1px 2px 0 rgba(255, 255, 255, 1);
+  }
+
+  .liquid-glass-dark {
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(26px) saturate(180%);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 
+      0 20px 40px -10px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .liquid-card {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 1.5rem;
+    box-shadow: 
+      0 10px 30px -5px rgba(0, 0, 0, 0.03),
+      0 4px 10px -2px rgba(0, 0, 0, 0.02),
+      inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9);
+    transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .liquid-card:hover {
+    transform: translateY(-4px) scale(1.005);
+    box-shadow: 
+      0 24px 48px -10px rgba(0, 0, 0, 0.08),
+      0 12px 24px -5px rgba(0, 0, 0, 0.04),
+      inset 0 1px 2px 0 rgba(255, 255, 255, 1);
+  }
+
+  .liquid-pill {
+    border-radius: 9999px;
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .liquid-pill:active {
+    transform: scale(0.96);
+  }
+
+  .liquid-spring {
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .liquid-spring:active {
+    transform: scale(0.97);
+  }
+}
+
+/* iOS 18 Slim Overlay Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+  backdrop-filter: blur(8px);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}
