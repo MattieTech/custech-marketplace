@@ -175,7 +175,7 @@ export function CustechLogoLoader({
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 / speed, duration: 0.35 }}
-              className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mt-2 text-center"
+              className="text-xs sm:text-sm font-medium text-slate-500 mt-2 text-center"
             >
               {message}
             </motion.p>

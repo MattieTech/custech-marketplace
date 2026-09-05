@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --color-custech-green: #22c55e;
   --color-custech-emerald: #059669;

@@ -49,8 +49,8 @@ export function CustechSplashScreen({
           transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
           className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-6 select-none ${
             blurred
-              ? 'bg-white/95 dark:bg-slate-950/95 backdrop-blur-md'
-              : 'bg-white dark:bg-slate-950'
+              ? 'bg-white/95 backdrop-blur-md'
+              : 'bg-white'
           }`}
           role="dialog"
           aria-modal="true"
@@ -70,9 +70,9 @@ export function CustechSplashScreen({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8, duration: 0.4 }}
-              className="mt-8 flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 text-[11px] font-medium text-green-700 dark:text-green-300"
+              className="mt-8 flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-medium text-emerald-700"
             >
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>CUSTECH Verified Community Platform</span>
             </motion.div>
           </div>

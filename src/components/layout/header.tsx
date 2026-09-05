@@ -39,7 +39,6 @@ export function Header() {
 
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -49,24 +48,12 @@ export function Header() {
       setUser(user);
 
       if (user) {
-        // Fetch profile
         const { data: prof } = await supabase
           .from('profiles')
           .select('display_name, referral_code, avatar_url, verification_status')
           .eq('user_id', user.id)
           .maybeSingle();
         setProfile(prof);
-
-        // Check if admin
-        const { data: adminRole } = await supabase
-          .from('admin_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (adminRole || user.email === 'matthewaliu001@gmail.com') {
-          setIsAdmin(true);
-        }
       }
     }
 
@@ -76,7 +63,6 @@ export function Header() {
       setUser(session?.user ?? null);
       if (!session?.user) {
         setProfile(null);
-        setIsAdmin(false);
       }
     });
 
@@ -113,32 +99,32 @@ export function Header() {
   return (
     <>
       {/* Mobile Top Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/80 dark:border-zinc-800/80 bg-white/85 dark:bg-zinc-900/85 backdrop-blur-2xl backdrop-saturate-190 h-14 flex md:hidden items-center px-4 justify-between shadow-[0_4px_24px_rgba(0,0,0,0.03)] select-none">
+      <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-xl h-14 flex md:hidden items-center px-4 justify-between shadow-xs select-none">
         <div className="flex items-center gap-2.5">
           {/* Hamburger Menu Toggle Button */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 flex items-center justify-center active:scale-90 transition-transform shadow-2xs"
+            className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-transform"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
           </button>
 
           <Link href="/" className="flex items-center gap-2 active:scale-95 transition-transform">
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950 p-0.5 flex items-center justify-center border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 p-0.5 flex items-center justify-center border border-emerald-200">
               <Image
                 src="/logo.png"
                 alt="CUSTECH Marketplace"
-                width={24}
-                height={24}
+                width={26}
+                height={26}
                 className="object-contain"
                 priority
               />
             </div>
             <div className="flex items-center gap-1 leading-tight">
-              <span className="text-base font-black text-emerald-700 dark:text-emerald-400 tracking-tight">CUSTECH</span>
-              <span className="text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight">Market</span>
+              <span className="text-base font-black text-emerald-700 tracking-tight">CUSTECH</span>
+              <span className="text-sm font-bold text-slate-800 tracking-tight">Market</span>
             </div>
           </Link>
         </div>
@@ -150,7 +136,7 @@ export function Header() {
               <button 
                 type="button" 
                 onClick={() => setShowSearchInput(false)}
-                className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center shrink-0"
+                className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -159,7 +145,7 @@ export function Header() {
             <button 
               type="button"
               onClick={() => setShowSearchInput(true)} 
-              className="w-8 h-8 rounded-full bg-slate-100/80 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 flex items-center justify-center transition-all active:scale-90"
+              className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90"
               aria-label="Search"
             >
               <Search className="w-4 h-4" />
@@ -169,7 +155,7 @@ export function Header() {
           {user ? (
             <Link 
               href="/dashboard" 
-              className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs active:scale-90 transition-all shadow-2xs"
+              className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold text-xs active:scale-90 transition-all shadow-xs"
               aria-label="Dashboard"
             >
               {profile?.display_name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
@@ -177,7 +163,7 @@ export function Header() {
           ) : (
             <Link 
               href="/login" 
-              className="text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-full shadow-2xs active:scale-95 transition-all"
+              className="text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-full shadow-xs active:scale-95 transition-all"
             >
               Sign In
             </Link>
@@ -185,22 +171,22 @@ export function Header() {
         </div>
       </header>
 
-      {/* Mobile Slide-Over Liquid Glass Drawer (Requirement 10) */}
+      {/* Mobile Slide-Over Drawer */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           {/* Backdrop Blur Overlay */}
           <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
             onClick={() => setMobileMenuOpen(false)}
           />
 
           {/* Drawer Panel */}
-          <div className="relative w-4/5 max-w-sm bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-r border-white/60 dark:border-zinc-800 h-full shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-left duration-300 overflow-y-auto">
+          <div className="relative w-4/5 max-w-sm bg-white border-r border-slate-200 h-full shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-left duration-300 overflow-y-auto">
             <div className="p-5 space-y-5">
               {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950 p-1 flex items-center justify-center border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 p-1 flex items-center justify-center border border-emerald-200">
                     <Image
                       src="/logo.png"
                       alt="CUSTECH Marketplace"
@@ -210,41 +196,41 @@ export function Header() {
                     />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-base font-black text-emerald-700 dark:text-emerald-400 tracking-tight leading-tight">CUSTECH</span>
-                    <span className="text-[10px] font-bold text-zinc-400 tracking-wider uppercase">Marketplace</span>
+                    <span className="text-base font-black text-emerald-700 tracking-tight leading-tight">CUSTECH</span>
+                    <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Marketplace</span>
                   </div>
                 </Link>
 
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 flex items-center justify-center"
+                  className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center"
                   aria-label="Close menu"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* User Greeting / Auth Status */}
+              {/* User Status / Greeting */}
               {user ? (
-                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/60 dark:border-zinc-800 flex items-center justify-between">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center shadow-xs">
                       {profile?.display_name?.charAt(0).toUpperCase() || 'U'}
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-50 leading-tight">
+                      <h4 className="text-xs font-bold text-slate-900 leading-tight">
                         {profile?.display_name || user.email}
                       </h4>
                       {profile?.referral_code && (
-                        <p className="font-mono text-[11px] text-green-600 font-semibold">
+                        <p className="font-mono text-[11px] text-emerald-600 font-semibold">
                           @{profile.referral_code}
                         </p>
                       )}
                     </div>
                   </div>
                   {profile?.verification_status === 'approved' && (
-                    <ShieldCheck className="w-4 h-4 text-green-600" />
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   )}
                 </div>
               ) : (
@@ -252,125 +238,125 @@ export function Header() {
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-center py-2.5 px-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-bold text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200"
+                    className="flex items-center justify-center py-2.5 px-3 rounded-xl bg-slate-100 text-xs font-bold text-slate-800 hover:bg-slate-200"
                   >
                     Sign In
                   </Link>
                   <Link
                     href="/register"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-center py-2.5 px-3 rounded-xl bg-green-600 text-xs font-bold text-white hover:bg-green-700 shadow-xs"
+                    className="flex items-center justify-center py-2.5 px-3 rounded-xl bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700 shadow-xs"
                   >
                     Register
                   </Link>
                 </div>
               )}
 
-              {/* Navigation Section */}
+              {/* Campus Navigation */}
               <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 px-2 mb-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
                   Explore Campus
                 </p>
 
                 <Link
                   href="/marketplace"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70 text-xs font-bold text-zinc-800 dark:text-zinc-200 transition-colors"
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Store className="w-4 h-4 text-blue-500" />
+                    <Store className="w-4 h-4 text-blue-600" />
                     <span>Marketplace</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </Link>
 
                 <Link
                   href="/services"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70 text-xs font-bold text-zinc-800 dark:text-zinc-200 transition-colors"
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Briefcase className="w-4 h-4 text-cyan-500" />
+                    <Briefcase className="w-4 h-4 text-cyan-600" />
                     <span>Student Services</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </Link>
 
                 <Link
                   href="/housing"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70 text-xs font-bold text-zinc-800 dark:text-zinc-200 transition-colors"
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
-                    <HomeIcon className="w-4 h-4 text-emerald-500" />
+                    <HomeIcon className="w-4 h-4 text-emerald-600" />
                     <span>Hostels & Housing</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </Link>
 
                 <Link
                   href="/businesses"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70 text-xs font-bold text-zinc-800 dark:text-zinc-200 transition-colors"
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Building2 className="w-4 h-4 text-indigo-500" />
+                    <Building2 className="w-4 h-4 text-indigo-600" />
                     <span>Student Businesses</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </Link>
 
                 <Link
                   href="/deals"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70 text-xs font-bold text-zinc-800 dark:text-zinc-200 transition-colors"
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Tag className="w-4 h-4 text-rose-500" />
+                    <Tag className="w-4 h-4 text-rose-600" />
                     <span>Discounts & Deals</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </Link>
 
                 <Link
                   href="/free-items"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70 text-xs font-bold text-zinc-800 dark:text-zinc-200 transition-colors"
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Gift className="w-4 h-4 text-purple-500" />
+                    <Gift className="w-4 h-4 text-purple-600" />
                     <span>Free Items (₦0)</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </Link>
 
                 <Link
                   href="/scam-check"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70 text-xs font-bold text-zinc-800 dark:text-zinc-200 transition-colors"
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
-                    <ShieldAlert className="w-4 h-4 text-amber-500" />
+                    <ShieldAlert className="w-4 h-4 text-amber-600" />
                     <span>ScamCheck Directory</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </Link>
               </div>
 
               {/* Account / Dashboard Section */}
               {user && (
-                <div className="space-y-1 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 px-2 mb-1.5">
+                <div className="space-y-1 pt-2 border-t border-slate-100">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
                     My Account
                   </p>
 
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-800 dark:text-zinc-200"
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800"
                   >
                     <div className="flex items-center gap-2.5">
-                      <User className="w-4 h-4 text-zinc-500" />
+                      <User className="w-4 h-4 text-slate-500" />
                       <span>User Dashboard</span>
                     </div>
                   </Link>
@@ -378,13 +364,13 @@ export function Header() {
                   <Link
                     href="/dashboard/referrals"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-800 dark:text-zinc-200"
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Share2 className="w-4 h-4 text-green-600" />
+                      <Share2 className="w-4 h-4 text-emerald-600" />
                       <span>Refer & Earn</span>
                     </div>
-                    <Badge variant="outline" className="text-[10px] text-green-700 bg-green-50 border-green-200">
+                    <Badge variant="outline" className="text-[10px] text-emerald-700 bg-emerald-50 border-emerald-200">
                       Earn ₦500
                     </Badge>
                   </Link>
@@ -392,45 +378,30 @@ export function Header() {
                   <Link
                     href="/dashboard/settings"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-800 dark:text-zinc-200"
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Settings className="w-4 h-4 text-zinc-500" />
+                      <Settings className="w-4 h-4 text-slate-500" />
                       <span>Account Settings</span>
                     </div>
                   </Link>
-
-                  {/* Admin Portal link for authorized admin */}
-                  {isAdmin && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-between px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-xs font-bold border border-purple-200 dark:border-purple-800 mt-2"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <ShieldCheck className="w-4 h-4 text-purple-600" />
-                        <span>Admin Control Portal</span>
-                      </div>
-                      <Badge className="bg-purple-600 text-white text-[9px]">Admin</Badge>
-                    </Link>
-                  )}
                 </div>
               )}
             </div>
 
             {/* Drawer Footer */}
-            <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+            <div className="p-4 border-t border-slate-100 space-y-2">
               {user ? (
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sign Out</span>
                 </button>
               ) : (
-                <p className="text-[11px] text-center text-zinc-400">
+                <p className="text-[11px] text-center text-slate-400">
                   CUSTECH Marketplace • Osara, Kogi State
                 </p>
               )}
@@ -440,11 +411,11 @@ export function Header() {
       )}
 
       {/* Desktop Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/70 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl backdrop-saturate-190 h-16 hidden md:flex items-center shadow-[0_4px_30px_rgba(0,0,0,0.03)] select-none">
+      <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-xl h-16 hidden md:flex items-center shadow-xs select-none">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex justify-between items-center h-full">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2.5 group active:scale-98 transition-transform">
-              <div className="w-9 h-9 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/90 p-1 flex items-center justify-center border border-emerald-200/80 dark:border-emerald-800 group-hover:border-emerald-400 shadow-xs transition-all">
+              <div className="w-9 h-9 rounded-2xl bg-emerald-50 p-1 flex items-center justify-center border border-emerald-200 group-hover:border-emerald-400 shadow-xs transition-all">
                 <Image
                   src="/logo.png"
                   alt="CUSTECH Marketplace"
@@ -456,37 +427,32 @@ export function Header() {
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-1 leading-tight">
-                  <span className="text-lg font-black text-emerald-700 dark:text-emerald-400 tracking-tight">CUSTECH</span>
-                  <span className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">Marketplace</span>
+                  <span className="text-lg font-black text-emerald-700 tracking-tight">CUSTECH</span>
+                  <span className="text-lg font-bold text-slate-900 tracking-tight">Marketplace</span>
                 </div>
                 <span className="text-[9px] font-bold text-slate-400 tracking-[0.22em] uppercase">Official Campus Hub</span>
               </div>
             </Link>
             
-            <nav className="hidden lg:flex items-center gap-1 p-1 bg-slate-100/60 dark:bg-zinc-800/60 backdrop-blur-md rounded-full border border-white/70 dark:border-zinc-700/60 shadow-2xs">
-              <Link href="/marketplace" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-zinc-700 transition-all">
+            <nav className="hidden lg:flex items-center gap-1 p-1 bg-slate-100/70 rounded-full border border-slate-200/60 shadow-xs">
+              <Link href="/marketplace" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
                 Marketplace
               </Link>
-              <Link href="/services" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-zinc-700 transition-all">
+              <Link href="/services" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
                 Services
               </Link>
-              <Link href="/housing" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-zinc-700 transition-all">
+              <Link href="/housing" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
                 Housing
               </Link>
-              <Link href="/businesses" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-zinc-700 transition-all">
+              <Link href="/businesses" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
                 Businesses
               </Link>
-              <Link href="/deals" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-zinc-700 transition-all">
+              <Link href="/deals" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
                 Deals
               </Link>
-              <Link href="/scam-check" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-zinc-700 transition-all">
+              <Link href="/scam-check" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
                 ScamCheck
               </Link>
-              {isAdmin && (
-                <Link href="/admin" className="px-3.5 py-1.5 rounded-full text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 transition-all">
-                  Admin
-                </Link>
-              )}
             </nav>
           </div>
 
@@ -504,10 +470,10 @@ export function Header() {
                   </Link>
                 </Button>
 
-                <div className="flex items-center gap-1 border-l border-slate-200/80 dark:border-zinc-700 pl-2.5 ml-1">
+                <div className="flex items-center gap-1 border-l border-slate-200 pl-2.5 ml-1">
                   <Link 
                     href="/messages" 
-                    className="w-8 h-8 rounded-full bg-slate-100/80 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 hover:text-slate-900 flex items-center justify-center transition-all active:scale-90 relative shadow-2xs" 
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-white text-slate-600 hover:text-slate-900 flex items-center justify-center transition-all active:scale-90 relative shadow-xs" 
                     aria-label="Messages"
                     title="Messages"
                   >
@@ -516,7 +482,7 @@ export function Header() {
 
                   <Link 
                     href="/dashboard/notifications" 
-                    className="w-8 h-8 rounded-full bg-slate-100/80 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 hover:text-slate-900 flex items-center justify-center transition-all active:scale-90 relative shadow-2xs" 
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-white text-slate-600 hover:text-slate-900 flex items-center justify-center transition-all active:scale-90 relative shadow-xs" 
                     aria-label="Notifications"
                     title="Notifications"
                   >
@@ -526,7 +492,7 @@ export function Header() {
 
                   <Link 
                     href="/dashboard" 
-                    className="px-3 py-1.5 rounded-full bg-slate-100/80 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 hover:text-emerald-700 transition-all flex items-center gap-1.5 shadow-2xs text-xs font-bold active:scale-95" 
+                    className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-white text-slate-700 hover:text-emerald-700 transition-all flex items-center gap-1.5 shadow-xs text-xs font-bold active:scale-95" 
                     aria-label="Dashboard"
                     title="My Account"
                   >
@@ -537,7 +503,7 @@ export function Header() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Button asChild variant="ghost" size="sm" className="text-xs font-semibold text-slate-700 dark:text-zinc-200 rounded-full px-4">
+                <Button asChild variant="ghost" size="sm" className="text-xs font-semibold text-slate-700 rounded-full px-4 hover:bg-slate-100">
                   <Link href="/login">
                     Sign In
                   </Link>

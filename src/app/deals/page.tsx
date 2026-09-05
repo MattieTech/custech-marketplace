@@ -73,17 +73,17 @@ export default async function DealsPage() {
 
   return (
     <PageContainer>
-      <div className="py-8 space-y-8 max-w-6xl mx-auto">
+      <div className="py-8 space-y-8 max-w-6xl mx-auto px-4 sm:px-0">
         {/* Header */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Campus Discounts & Vouchers</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
             Exclusive Student Deals
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xl">
+          <p className="text-sm text-slate-500 max-w-xl">
             Verified student promotions, food discounts, print vouchers, and device bargains across CUSTECH campus.
           </p>
         </div>
@@ -93,12 +93,12 @@ export default async function DealsPage() {
           {campusDeals.map((deal) => (
             <Card 
               key={deal.id} 
-              className="rounded-3xl border-white/60 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col justify-between"
+              className="rounded-3xl border-slate-200/80 bg-white shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 overflow-hidden flex flex-col justify-between"
             >
               <div>
-                <CardHeader className="p-5 pb-3 bg-gradient-to-r from-rose-500/10 via-pink-500/5 to-transparent border-b border-zinc-100 dark:border-zinc-800/80">
+                <CardHeader className="p-5 pb-3 bg-gradient-to-r from-rose-500/10 via-pink-500/5 to-transparent border-b border-slate-100">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1">
+                    <span className="text-xs font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1">
                       <Store className="w-3.5 h-3.5" />
                       {deal.business_name}
                     </span>
@@ -106,23 +106,23 @@ export default async function DealsPage() {
                       {deal.discount}
                     </Badge>
                   </div>
-                  <h3 className="font-black text-lg text-zinc-900 dark:text-zinc-100 pt-2 leading-tight">
+                  <h3 className="font-black text-lg text-slate-900 pt-2 leading-tight">
                     {deal.title}
                   </h3>
                 </CardHeader>
 
                 <CardContent className="p-5 space-y-3">
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     {deal.description}
                   </p>
 
-                  <div className="flex items-center gap-2 text-xs text-zinc-500">
-                    <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
                     <span>Validity: <strong>{deal.expires_at}</strong></span>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-500">
-                    <span className="font-semibold text-zinc-700 dark:text-zinc-300">T&C:</span> {deal.terms}
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-500">
+                    <span className="font-semibold text-slate-700">T&C:</span> {deal.terms}
                   </div>
                 </CardContent>
               </div>

@@ -122,8 +122,8 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
               </CardContent>
             </Card>
             
-            <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg flex gap-3 text-amber-800 dark:text-amber-200 text-sm">
-              <Info className="h-5 w-5 shrink-0" />
+            <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 flex gap-3 text-amber-800 text-sm">
+              <Info className="h-5 w-5 shrink-0 text-amber-600" />
               <p>Safety notice: Always visit properties in person before making payments. Never pay without proper documentation.</p>
             </div>
           </div>

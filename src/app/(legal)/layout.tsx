@@ -18,7 +18,7 @@ export default function LegalLayout({
           Back to Home
         </Link>
       </div>
-      <main className="prose prose-green dark:prose-invert max-w-none prose-headings:font-semibold prose-a:text-green-600">
+      <main className="prose prose-slate max-w-none prose-headings:font-semibold prose-headings:text-slate-900 prose-p:text-slate-600 prose-a:text-emerald-600">
         {children}
       </main>
     </PageContainer>

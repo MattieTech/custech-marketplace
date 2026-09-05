@@ -306,31 +306,31 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto py-6">
+    <div className="space-y-6 max-w-3xl mx-auto py-6 px-4 sm:px-0">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">Account & Security</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Account & Security</h1>
+        <p className="text-sm text-slate-500 mt-1">
           Manage your campus credentials, username, contact info, and security preferences.
         </p>
       </div>
 
       {/* 1. Email Address Card */}
-      <Card className="rounded-3xl border-white/60 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-md overflow-hidden">
+      <Card className="rounded-3xl border-slate-200/80 bg-white shadow-xs overflow-hidden">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-bold flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
-            <Mail className="w-5 h-5 text-green-600" />
+          <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900">
+            <Mail className="w-5 h-5 text-emerald-600" />
             Email Address
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-xs text-slate-500">
             Your primary login identifier and campus verification channel.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-zinc-50/80 dark:bg-zinc-800/40 p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-800">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/70">
             <div>
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Current Email</p>
-              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 font-mono mt-0.5">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Current Email</p>
+              <p className="text-sm font-semibold text-slate-900 font-mono mt-0.5">
                 {userData?.email}
               </p>
             </div>
@@ -339,7 +339,7 @@ export default function SettingsPage() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowEmailForm(true)}
-                className="rounded-xl font-bold text-xs border-zinc-300 dark:border-zinc-700"
+                className="rounded-xl font-bold text-xs border-slate-300 text-slate-700 hover:bg-slate-100"
               >
                 Change Email
               </Button>
@@ -347,8 +347,8 @@ export default function SettingsPage() {
           </div>
 
           {showEmailForm && (
-            <form onSubmit={handleEmailUpdate} className="space-y-3 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-800">
-              <label htmlFor="newEmail" className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+            <form onSubmit={handleEmailUpdate} className="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <label htmlFor="newEmail" className="text-xs font-bold text-slate-700">
                 New Email Address
               </label>
               <Input
@@ -358,9 +358,9 @@ export default function SettingsPage() {
                 onChange={(e) => setNewEmail(e.target.value)}
                 placeholder="newstudent@custech.edu.ng"
                 required
-                className="h-10 rounded-xl"
+                className="h-10 rounded-xl bg-white border-slate-200 text-slate-900"
               />
-              <p className="text-[11px] text-zinc-500">
+              <p className="text-[11px] text-slate-500">
                 A verification link will be dispatched to confirm ownership of the new email address before updating.
               </p>
               <div className="flex gap-2 pt-1">
@@ -368,7 +368,7 @@ export default function SettingsPage() {
                   type="submit" 
                   size="sm" 
                   disabled={emailLoading} 
-                  className="rounded-xl font-bold text-xs bg-green-600 hover:bg-green-700 text-white"
+                  className="rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                   {emailLoading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                   Send Verification Link
@@ -378,7 +378,7 @@ export default function SettingsPage() {
                   variant="ghost" 
                   size="sm" 
                   onClick={() => setShowEmailForm(false)}
-                  className="rounded-xl text-xs"
+                  className="rounded-xl text-xs text-slate-600 hover:bg-slate-200"
                 >
                   Cancel
                 </Button>
@@ -389,26 +389,26 @@ export default function SettingsPage() {
       </Card>
 
       {/* 2. Controlled Username Changes Card (Requirement 4) */}
-      <Card className="rounded-3xl border-white/60 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-md overflow-hidden">
+      <Card className="rounded-3xl border-slate-200/80 bg-white shadow-xs overflow-hidden">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-bold flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
-            <AtSign className="w-5 h-5 text-green-600" />
+          <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900">
+            <AtSign className="w-5 h-5 text-emerald-600" />
             Username & Referral Handle
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-xs text-slate-500">
             Your handle serves as your public profile URL (<span className="font-mono">/user/@username</span>) and referral code.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-zinc-50/80 dark:bg-zinc-800/40 p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-800">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/70">
             <div>
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Current Username</p>
-              <p className="text-base font-black text-green-600 dark:text-green-400 font-mono mt-0.5">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Current Username</p>
+              <p className="text-base font-black text-emerald-600 font-mono mt-0.5">
                 @{profile?.referral_code || 'not_set'}
               </p>
             </div>
             {profile?.referral_code && (
-              <Badge variant="outline" className="text-xs font-bold bg-green-50 text-green-700 border-green-200">
+              <Badge variant="outline" className="text-xs font-bold bg-emerald-50 text-emerald-700 border-emerald-200">
                 Active & Shareable
               </Badge>
             )}
@@ -416,18 +416,18 @@ export default function SettingsPage() {
 
           {/* Pending Request Status */}
           {pendingReq ? (
-            <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 space-y-3">
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-xs">
+                <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
                   <Clock className="w-4 h-4 text-amber-600" />
                   <span>Username Change Pending Admin Review</span>
                 </div>
-                <Badge variant="outline" className="border-amber-300 text-amber-700 bg-amber-100/60 text-[10px] font-bold">
+                <Badge variant="outline" className="border-amber-300 text-amber-800 bg-amber-100/60 text-[10px] font-bold">
                   Under Review
                 </Badge>
               </div>
-              <p className="text-xs text-zinc-700 dark:text-zinc-300">
-                You requested to change your username to <strong className="font-mono text-green-600">@{pendingReq.parsedDetails?.newUsername || 'new'}</strong>. Our administration team reviews change requests to prevent impersonation and fraud.
+              <p className="text-xs text-slate-700">
+                You requested to change your username to <strong className="font-mono text-emerald-700">@{pendingReq.parsedDetails?.newUsername || 'new'}</strong>. Our administration team reviews change requests to prevent impersonation and fraud.
               </p>
               <div className="flex justify-end pt-1">
                 <Button 
@@ -442,13 +442,13 @@ export default function SettingsPage() {
             </div>
           ) : (
             /* New Request Form */
-            <form onSubmit={handleUsernameRequest} className="space-y-4 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+            <form onSubmit={handleUsernameRequest} className="space-y-4 pt-2 border-t border-slate-100">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="desiredUsername" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                  <label htmlFor="desiredUsername" className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Request New Username
                   </label>
-                  <span className="text-[11px] text-zinc-400">Min 5 chars, alphanumeric + _</span>
+                  <span className="text-[11px] text-slate-400">Min 5 chars, alphanumeric + _</span>
                 </div>
                 <div className="relative">
                   <Input
@@ -457,14 +457,14 @@ export default function SettingsPage() {
                     onChange={(e) => setDesiredUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                     placeholder="e.g. musa_tech"
                     maxLength={30}
-                    className="h-10 pr-10 font-mono text-sm rounded-xl"
+                    className="h-10 pr-10 font-mono text-sm rounded-xl bg-white border-slate-200 text-slate-900"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
                     {checkingUsername ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
                     ) : usernameStatus.checked ? (
                       usernameStatus.available ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       ) : (
                         <XCircle className="w-4 h-4 text-red-500" />
                       )
@@ -472,14 +472,14 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 {usernameStatus.checked && (
-                  <p className={`text-[11px] font-medium ${usernameStatus.available ? 'text-green-600' : 'text-red-500'}`}>
+                  <p className={`text-[11px] font-medium ${usernameStatus.available ? 'text-emerald-600' : 'text-red-500'}`}>
                     {usernameStatus.message}
                   </p>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="usernameReason" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                <label htmlFor="usernameReason" className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Reason for Change
                 </label>
                 <Input
@@ -487,7 +487,7 @@ export default function SettingsPage() {
                   value={usernameReason}
                   onChange={(e) => setUsernameReason(e.target.value)}
                   placeholder="e.g. Correcting name or rebranding campus business"
-                  className="h-10 text-xs rounded-xl"
+                  className="h-10 text-xs rounded-xl bg-white border-slate-200 text-slate-900"
                 />
               </div>
 
@@ -495,7 +495,7 @@ export default function SettingsPage() {
                 type="submit"
                 size="sm"
                 disabled={usernameLoading || !desiredUsername || (usernameStatus.checked && !usernameStatus.available)}
-                className="rounded-xl font-bold text-xs bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                className="rounded-xl font-bold text-xs bg-slate-900 hover:bg-slate-800 text-white"
               >
                 {usernameLoading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                 Submit Username Request
@@ -506,13 +506,13 @@ export default function SettingsPage() {
       </Card>
 
       {/* 3. Seller Bank & Contact Details */}
-      <Card className="rounded-3xl border-white/60 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-md overflow-hidden">
+      <Card className="rounded-3xl border-slate-200/80 bg-white shadow-xs overflow-hidden">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-bold flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
-            <CreditCard className="w-5 h-5 text-green-600" />
+          <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900">
+            <CreditCard className="w-5 h-5 text-emerald-600" />
             Seller Direct Bank & WhatsApp Contact
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-xs text-slate-500">
             Displayed on your item listings for direct bank transfers and WhatsApp communication.
           </CardDescription>
         </CardHeader>
@@ -520,12 +520,12 @@ export default function SettingsPage() {
           <form onSubmit={handleBankUpdate} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label htmlFor="bankName" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Bank Name</label>
+                <label htmlFor="bankName" className="text-xs font-bold text-slate-700 uppercase tracking-wider">Bank Name</label>
                 <select
                   id="bankName"
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="flex h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="OPay">OPay</option>
                   <option value="Palmpay">Palmpay</option>
@@ -546,39 +546,39 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="accountNumber" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Account Number (10 Digits)</label>
+                <label htmlFor="accountNumber" className="text-xs font-bold text-slate-700 uppercase tracking-wider">Account Number (10 Digits)</label>
                 <Input
                   id="accountNumber"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder="0123456789"
                   maxLength={10}
-                  className="h-10 font-mono text-sm rounded-xl"
+                  className="h-10 font-mono text-sm rounded-xl bg-white border-slate-200 text-slate-900"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label htmlFor="accountName" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Account Name</label>
+                <label htmlFor="accountName" className="text-xs font-bold text-slate-700 uppercase tracking-wider">Account Name</label>
                 <Input
                   id="accountName"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
                   placeholder="e.g. Ibrahim Musa"
-                  className="h-10 text-sm rounded-xl"
+                  className="h-10 text-sm rounded-xl bg-white border-slate-200 text-slate-900"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="whatsappNumber" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">WhatsApp Phone Line</label>
+                <label htmlFor="whatsappNumber" className="text-xs font-bold text-slate-700 uppercase tracking-wider">WhatsApp Phone Line</label>
                 <Input
                   id="whatsappNumber"
                   value={whatsappNumber}
                   onChange={(e) => setWhatsappNumber(e.target.value)}
                   placeholder="080XXXXXXXX"
                   type="tel"
-                  className="h-10 text-sm rounded-xl"
+                  className="h-10 text-sm rounded-xl bg-white border-slate-200 text-slate-900"
                 />
               </div>
             </div>
@@ -586,7 +586,7 @@ export default function SettingsPage() {
             <Button 
               type="submit" 
               disabled={bankLoading}
-              className="rounded-xl font-bold text-xs bg-green-600 hover:bg-green-700 text-white"
+              className="rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               {bankLoading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
               Save Payment & WhatsApp Details
@@ -596,20 +596,20 @@ export default function SettingsPage() {
       </Card>
 
       {/* 4. Password Change (with Current Password check) */}
-      <Card className="rounded-3xl border-white/60 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-md overflow-hidden">
+      <Card className="rounded-3xl border-slate-200/80 bg-white shadow-xs overflow-hidden">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-bold flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
-            <Lock className="w-5 h-5 text-green-600" />
+          <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900">
+            <Lock className="w-5 h-5 text-emerald-600" />
             Change Password
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-xs text-slate-500">
             Verify your current password to set a new strong password.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePasswordUpdate} className="space-y-4">
             <div className="space-y-1.5">
-              <label htmlFor="currentPassword" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+              <label htmlFor="currentPassword" className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Current Password
               </label>
               <Input
@@ -619,13 +619,13 @@ export default function SettingsPage() {
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="h-10 rounded-xl"
+                className="h-10 rounded-xl bg-white border-slate-200 text-slate-900"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label htmlFor="newPassword" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                <label htmlFor="newPassword" className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   New Password
                 </label>
                 <Input
@@ -636,12 +636,12 @@ export default function SettingsPage() {
                   placeholder="••••••••"
                   required
                   minLength={8}
-                  className="h-10 rounded-xl"
+                  className="h-10 rounded-xl bg-white border-slate-200 text-slate-900"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="confirmPassword" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                <label htmlFor="confirmPassword" className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Confirm New Password
                 </label>
                 <Input
@@ -652,16 +652,16 @@ export default function SettingsPage() {
                   placeholder="••••••••"
                   required
                   minLength={8}
-                  className="h-10 rounded-xl"
+                  className="h-10 rounded-xl bg-white border-slate-200 text-slate-900"
                 />
               </div>
             </div>
-            <p className="text-[11px] text-zinc-400">Must be at least 8 characters.</p>
+            <p className="text-[11px] text-slate-400">Must be at least 8 characters.</p>
 
             <Button 
               type="submit" 
               disabled={pwdLoading}
-              className="rounded-xl font-bold text-xs bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900"
+              className="rounded-xl font-bold text-xs bg-slate-900 hover:bg-slate-800 text-white"
             >
               {pwdLoading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
               Update Password
@@ -671,18 +671,18 @@ export default function SettingsPage() {
       </Card>
 
       {/* 5. Danger Zone: Delete Account */}
-      <Card className="rounded-3xl border-red-200 dark:border-red-950/60 bg-red-50/40 dark:bg-red-950/20 backdrop-blur-xl shadow-xs overflow-hidden">
+      <Card className="rounded-3xl border-red-200 bg-red-50/50 shadow-xs overflow-hidden">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-bold flex items-center gap-2 text-red-600 dark:text-red-400">
-            <ShieldAlert className="w-5 h-5" />
+          <CardTitle className="text-lg font-bold flex items-center gap-2 text-red-700">
+            <ShieldAlert className="w-5 h-5 text-red-600" />
             Delete Account
           </CardTitle>
-          <CardDescription className="text-xs text-red-600/80 dark:text-red-400/80">
+          <CardDescription className="text-xs text-red-600/80">
             Permanently delete your CUSTECH Marketplace profile, active listings, reviews, and login access.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+          <p className="text-xs text-slate-600 leading-relaxed">
             This action cannot be undone. Once deleted, all your active listings, hostel offers, saved items, and verified badges will be purged from the platform.
           </p>
 
@@ -691,14 +691,14 @@ export default function SettingsPage() {
               onClick={() => setShowDeleteModal(true)}
               variant="destructive"
               size="sm"
-              className="rounded-xl font-bold text-xs gap-2"
+              className="rounded-xl font-bold text-xs gap-2 bg-red-600 hover:bg-red-700 text-white"
             >
               <Trash2 className="w-3.5 h-3.5" /> Request Account Deletion
             </Button>
           ) : (
-            <form onSubmit={handleDeleteAccount} className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-red-300 dark:border-red-900 space-y-4">
+            <form onSubmit={handleDeleteAccount} className="p-4 rounded-2xl bg-white border border-red-200 space-y-4 shadow-xs">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-red-600">
+                <label className="text-xs font-bold text-red-700">
                   Type <span className="font-mono font-black">DELETE MY ACCOUNT</span> to confirm:
                 </label>
                 <Input
@@ -706,12 +706,12 @@ export default function SettingsPage() {
                   onChange={(e) => setDelConfirmationText(e.target.value)}
                   placeholder="DELETE MY ACCOUNT"
                   required
-                  className="h-10 font-mono text-sm border-red-300 rounded-xl"
+                  className="h-10 font-mono text-sm border-red-300 rounded-xl bg-white text-slate-900"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                <label className="text-xs font-bold text-slate-700">
                   Enter Password:
                 </label>
                 <Input
@@ -720,7 +720,7 @@ export default function SettingsPage() {
                   onChange={(e) => setDelPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="h-10 rounded-xl"
+                  className="h-10 rounded-xl bg-white border-slate-200 text-slate-900"
                 />
               </div>
 
@@ -730,7 +730,7 @@ export default function SettingsPage() {
                   variant="destructive"
                   size="sm"
                   disabled={delLoading || delConfirmationText !== 'DELETE MY ACCOUNT'}
-                  className="rounded-xl font-bold text-xs"
+                  className="rounded-xl font-bold text-xs bg-red-600 hover:bg-red-700 text-white"
                 >
                   {delLoading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                   Confirm Permanent Deletion
@@ -740,7 +740,7 @@ export default function SettingsPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowDeleteModal(false)}
-                  className="rounded-xl text-xs"
+                  className="rounded-xl text-xs text-slate-600 hover:bg-slate-100"
                 >
                   Cancel
                 </Button>

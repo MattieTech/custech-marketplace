@@ -76,12 +76,12 @@ export default async function FreeItemsPage(props: FreeItemsPageProps) {
           </Button>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-100 dark:border-green-900/50">
+        <div className="flex flex-col md:flex-row gap-4 bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80 shadow-xs">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input 
               placeholder="Search free items..." 
-              className="pl-9 bg-background"
+              className="pl-9 bg-white border-slate-200 text-slate-900 rounded-xl"
               defaultValue={query}
             />
           </div>

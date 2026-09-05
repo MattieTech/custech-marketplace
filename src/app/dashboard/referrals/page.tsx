@@ -68,16 +68,16 @@ export default function ReferralsPage() {
 
   return (
     <PageContainer>
-      <div className="py-6 space-y-8 max-w-5xl mx-auto">
+      <div className="py-6 space-y-8 max-w-5xl mx-auto px-4 sm:px-0">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 text-xs font-semibold mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold mb-2">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Campus Ambassador Rewards</span>
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">Refer & Earn</h1>
-            <p className="text-zinc-500 dark:text-zinc-400 mt-1 text-sm max-w-xl">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Refer & Earn</h1>
+            <p className="text-slate-500 mt-1 text-sm max-w-xl">
               Share your unique invite code with fellow CUSTECH students. Earn cash rewards when they register and verify their accounts.
             </p>
           </div>
@@ -93,29 +93,29 @@ export default function ReferralsPage() {
         </div>
 
         {/* Share Link Banner */}
-        <Card className="border-green-200/80 dark:border-green-900/60 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-transparent backdrop-blur-xl shadow-md rounded-2xl overflow-hidden">
+        <Card className="border-emerald-200/80 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent shadow-xs rounded-2xl overflow-hidden">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Your Unique Referral Link</CardTitle>
-                <CardDescription className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Your username <span className="font-mono font-bold text-green-600 dark:text-green-400">@{referralCode}</span> is your permanent referral ID
+                <CardTitle className="text-lg font-bold text-slate-900">Your Unique Referral Link</CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Your username <span className="font-mono font-bold text-emerald-600">@{referralCode}</span> is your permanent referral ID
                 </CardDescription>
               </div>
-              <Badge variant="outline" className="border-green-300 text-green-700 dark:border-green-800 dark:text-green-300 bg-green-100/50 dark:bg-green-950/40">
+              <Badge variant="outline" className="border-emerald-300 text-emerald-700 bg-emerald-100/50">
                 Active Code
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col sm:flex-row items-center gap-3">
-              <div className="bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 flex-1 w-full font-mono text-sm text-zinc-800 dark:text-zinc-200 select-all truncate shadow-inner">
+              <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 flex-1 w-full font-mono text-sm text-slate-800 select-all truncate shadow-inner">
                 {shareLink}
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button 
                   onClick={handleCopy} 
-                  className={cn("flex-1 sm:flex-initial rounded-xl font-bold h-11 text-xs gap-2", copied ? "bg-green-600 hover:bg-green-700 text-white" : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800")}
+                  className={cn("flex-1 sm:flex-initial rounded-xl font-bold h-11 text-xs gap-2", copied ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-900 text-white hover:bg-slate-800")}
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   {copied ? "Link Copied!" : "Copy Link"}
@@ -123,7 +123,7 @@ export default function ReferralsPage() {
                 <Button 
                   variant="outline"
                   onClick={handleTwitterShare} 
-                  className="rounded-xl font-bold h-11 text-xs px-3 border-zinc-300 dark:border-zinc-700"
+                  className="rounded-xl font-bold h-11 text-xs px-3 border-slate-300 text-slate-700 hover:bg-slate-50"
                 >
                   Share X
                 </Button>
@@ -134,9 +134,9 @@ export default function ReferralsPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="rounded-2xl border-white/40 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl shadow-xs">
+          <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
             <CardHeader className="p-5 pb-2">
-              <CardTitle className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+              <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <Users className="w-4 h-4 text-blue-500" />
                 Invited Students
               </CardTitle>
@@ -145,18 +145,18 @@ export default function ReferralsPage() {
               {loading ? (
                 <Skeleton className="h-8 w-16" />
               ) : (
-                <div className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-50">
+                <div className="text-2xl sm:text-3xl font-black text-slate-900">
                   {stats?.totalReferrals || 0}
                 </div>
               )}
-              <p className="text-[11px] text-zinc-400 mt-1">Total registered with your link</p>
+              <p className="text-[11px] text-slate-400 mt-1">Total registered with your link</p>
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-white/40 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl shadow-xs">
+          <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
             <CardHeader className="p-5 pb-2">
-              <CardTitle className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+              <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
                 Verified Members
               </CardTitle>
             </CardHeader>
@@ -164,17 +164,17 @@ export default function ReferralsPage() {
               {loading ? (
                 <Skeleton className="h-8 w-16" />
               ) : (
-                <div className="text-2xl sm:text-3xl font-black text-green-600 dark:text-green-400">
+                <div className="text-2xl sm:text-3xl font-black text-emerald-600">
                   {stats?.qualifiedReferrals || 0}
                 </div>
               )}
-              <p className="text-[11px] text-zinc-400 mt-1">Qualified for payout reward</p>
+              <p className="text-[11px] text-slate-400 mt-1">Qualified for payout reward</p>
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-white/40 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl shadow-xs">
+          <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
             <CardHeader className="p-5 pb-2">
-              <CardTitle className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+              <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <Wallet className="w-4 h-4 text-emerald-600" />
                 Total Earned
               </CardTitle>
@@ -183,17 +183,17 @@ export default function ReferralsPage() {
               {loading ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
-                <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                <div className="text-2xl sm:text-3xl font-black text-emerald-600">
                   {formatPrice(stats?.totalEarned || 0)}
                 </div>
               )}
-              <p className="text-[11px] text-zinc-400 mt-1">Paid directly to wallet/bank</p>
+              <p className="text-[11px] text-slate-400 mt-1">Paid directly to wallet/bank</p>
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-white/40 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl shadow-xs">
+          <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
             <CardHeader className="p-5 pb-2">
-              <CardTitle className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+              <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-amber-500" />
                 Pending Rewards
               </CardTitle>
@@ -202,11 +202,11 @@ export default function ReferralsPage() {
               {loading ? (
                 <Skeleton className="h-8 w-20" />
               ) : (
-                <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
+                <div className="text-2xl sm:text-3xl font-black text-amber-600">
                   {formatPrice(stats?.pendingRewards || 0)}
                 </div>
               )}
-              <p className="text-[11px] text-zinc-400 mt-1">Awaiting admin review</p>
+              <p className="text-[11px] text-slate-400 mt-1">Awaiting admin review</p>
             </CardContent>
           </Card>
         </div>
@@ -216,11 +216,11 @@ export default function ReferralsPage() {
           {/* History List */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Recent Referrals</h2>
-              <span className="text-xs text-zinc-400 font-mono">{history.length} records</span>
+              <h2 className="text-lg font-bold text-slate-900">Recent Referrals</h2>
+              <span className="text-xs text-slate-400 font-mono">{history.length} records</span>
             </div>
 
-            <Card className="rounded-2xl border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-xs">
+            <Card className="rounded-2xl border-slate-200 overflow-hidden shadow-xs bg-white">
               {loading ? (
                 <div className="p-8 space-y-3">
                   <Skeleton className="h-6 w-full" />
@@ -229,30 +229,30 @@ export default function ReferralsPage() {
                 </div>
               ) : history.length === 0 ? (
                 <div className="p-10 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
                     <Users className="w-6 h-6" />
                   </div>
-                  <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">No Referrals Yet</h3>
-                  <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                  <h3 className="font-bold text-sm text-slate-900">No Referrals Yet</h3>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
                     Share your unique link on your WhatsApp status and department groups to start earning rewards today!
                   </p>
-                  <Button onClick={handleCopy} size="sm" variant="outline" className="rounded-xl text-xs gap-1.5 font-bold">
+                  <Button onClick={handleCopy} size="sm" variant="outline" className="rounded-xl text-xs gap-1.5 font-bold border-slate-200">
                     <Copy className="w-3.5 h-3.5" /> Copy Link
                   </Button>
                 </div>
               ) : (
-                <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <div className="divide-y divide-slate-100">
                   {history.map((item) => (
-                    <div key={item.id} className="p-4 flex items-center justify-between hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors">
+                    <div key={item.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-600 dark:text-zinc-300">
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600">
                           {item.referral_code?.charAt(0).toUpperCase() || 'U'}
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                          <p className="text-xs font-bold text-slate-900">
                             Invited Student
                           </p>
-                          <p className="text-[11px] text-zinc-400">
+                          <p className="text-[11px] text-slate-400">
                             Joined {formatDate(item.created_at)}
                           </p>
                         </div>
@@ -264,13 +264,13 @@ export default function ReferralsPage() {
                           className={cn(
                             "capitalize text-[10px] font-bold",
                             item.status === 'qualified' || item.status === 'rewarded' 
-                              ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400" 
-                              : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
+                              ? "bg-emerald-100 text-emerald-700" 
+                              : "bg-amber-100 text-amber-700"
                           )}
                         >
                           {item.status}
                         </Badge>
-                        <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                        <span className="text-xs font-bold text-slate-900">
                           +{formatPrice(item.reward_amount || 500)}
                         </span>
                       </div>
@@ -283,42 +283,42 @@ export default function ReferralsPage() {
 
           {/* Guide Card */}
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">How It Works</h2>
-            <Card className="rounded-2xl border-zinc-200 dark:border-zinc-800 p-5 space-y-4 shadow-xs bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl">
+            <h2 className="text-lg font-bold text-slate-900">How It Works</h2>
+            <Card className="rounded-2xl border-slate-200 p-5 space-y-4 shadow-xs bg-white">
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 font-bold text-xs flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center shrink-0">
                   1
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Share your link</h4>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">Send your invite link to friends, class groups, or hostel peers.</p>
+                  <h4 className="text-xs font-bold text-slate-900">Share your link</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Send your invite link to friends, class groups, or hostel peers.</p>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 font-bold text-xs flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center shrink-0">
                   2
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">They register & verify</h4>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">When they sign up and get verified with student credentials.</p>
+                  <h4 className="text-xs font-bold text-slate-900">They register & verify</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">When they sign up and get verified with student credentials.</p>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 font-bold text-xs flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center shrink-0">
                   3
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Earn Cash Rewards</h4>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">Your referral bonus is credited directly to your bank account or wallet.</p>
+                  <h4 className="text-xs font-bold text-slate-900">Earn Cash Rewards</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Your referral bonus is credited directly to your bank account or wallet.</p>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="pt-2 border-t border-slate-100">
                 <Link 
                   href="/verification" 
-                  className="text-xs font-bold text-green-600 hover:text-green-700 flex items-center justify-between group"
+                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center justify-between group"
                 >
                   <span>Verify your own account</span>
                   <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
