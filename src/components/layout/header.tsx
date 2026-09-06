@@ -165,20 +165,12 @@ export function Header() {
               {profile?.display_name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
             </Link>
           ) : (
-            <div className="flex items-center gap-1.5">
-              <Link 
-                href="/login" 
-                className="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-full transition-all"
-              >
-                Sign In
-              </Link>
-              <Link 
-                href="/register" 
-                className="text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-full shadow-xs transition-all"
-              >
-                Register
-              </Link>
-            </div>
+            <Link 
+              href="/login" 
+              className="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-full transition-all shrink-0 whitespace-nowrap"
+            >
+              Sign In
+            </Link>
           )}
         </div>
       </header>
