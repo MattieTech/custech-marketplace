@@ -1,54 +1,10 @@
 import Link from 'next/link';
-import { Star, CheckCircle2, MapPin, Sparkles } from 'lucide-react';
+import { Star, CheckCircle2, MapPin, Sparkles, Package } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/server';
 import { formatPrice } from '@/lib/utils';
 
-// Fallback high-fidelity sample data strictly matching Screenshot 2
-const FALLBACK_FEATURED = [
-  {
-    id: 'feat-1',
-    title: 'Samsung Galaxy A54 5G — 128GB Black',
-    price: 185000,
-    condition: 'Like New',
-    location: 'KSU area, Anyigba',
-    seller_type: 'trusted',
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    id: 'feat-2',
-    title: 'HP EliteBook 840 G6 — Core i7, 16GB..',
-    price: 320000,
-    condition: 'Good',
-    location: 'Lokoja',
-    seller_type: 'verified',
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    id: 'feat-3',
-    title: 'Self-Contained Room — Near Campus..',
-    price: 120000,
-    condition: 'New',
-    location: '5 mins from campus gate',
-    seller_type: 'verified',
-    rating: 4.6,
-    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    id: 'feat-4',
-    title: 'Graphic Design & Branding Services',
-    price: 5000,
-    condition: 'New',
-    location: 'Remote (Delivery online)',
-    seller_type: 'trusted',
-    rating: 5.0,
-    image: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=600&q=80',
-  },
-];
-
 export async function FeaturedListings() {
-  let displayListings = FALLBACK_FEATURED;
+  let displayListings: any[] = [];
 
   try {
     const admin = await createAdminClient();
@@ -62,7 +18,7 @@ export async function FeaturedListings() {
         location,
         is_featured,
         created_at,
-        seller:profiles(full_name, is_verified),
+        seller:profiles!user_id(display_name, verification_status, trust_level, rating_avg),
         images:listing_images(url)
       `)
       .eq('status', 'active')
@@ -70,23 +26,30 @@ export async function FeaturedListings() {
       .order('created_at', { ascending: false })
       .limit(4);
 
-    if (dbListings && dbListings.length >= 2) {
-      displayListings = dbListings.map((item: any, index: number) => {
-        const defaultItem = FALLBACK_FEATURED[index % FALLBACK_FEATURED.length];
+    if (dbListings && dbListings.length > 0) {
+      displayListings = dbListings.map((item: any) => {
+        const sellerProfile = Array.isArray(item.seller) ? item.seller[0] : item.seller;
         return {
           id: item.id,
           title: item.title,
-          price: item.price ? Number(item.price) : defaultItem.price,
-          condition: item.condition ? item.condition.replace('_', ' ') : defaultItem.condition,
-          location: item.location || defaultItem.location,
-          seller_type: item.seller?.is_verified ? 'verified' : 'trusted',
-          rating: defaultItem.rating,
-          image: item.images?.[0]?.url || defaultItem.image,
+          price: item.price ? Number(item.price) : 0,
+          condition: item.condition ? item.condition.replace('_', ' ') : 'Good',
+          location: item.location || 'Campus / Osara',
+          seller_type: sellerProfile?.verification_status === 'approved' ? 'verified' : 'trusted',
+          rating: Number(sellerProfile?.rating_avg || 5.0).toFixed(1),
+          image: item.images?.[0]?.url || null,
+          is_featured: item.is_featured,
         };
       });
     }
   } catch (err) {
-    // Graceful fallback to rich sample data
+    console.error('Error loading featured listings:', err);
+    displayListings = [];
+  }
+
+  // If no listings in the database yet, return null cleanly (NO fake mock listings)
+  if (displayListings.length === 0) {
+    return null;
   }
 
   return (
@@ -109,26 +72,37 @@ export async function FeaturedListings() {
           >
             {/* Image Container with Badges */}
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-              />
+              {item.image ? (
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-1.5">
+                  <Package className="w-8 h-8 stroke-[1.5]" />
+                  <span className="text-[11px] font-medium">Campus Item</span>
+                </div>
+              )}
 
-              {/* Top-left Orange "Featured" pill */}
-              <div className="absolute top-2.5 left-2.5">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-amber-500 text-white shadow-xs">
-                  Featured
-                </span>
-              </div>
+              {/* Top-left Orange "Featured" pill if featured */}
+              {item.is_featured && (
+                <div className="absolute top-2.5 left-2.5">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-amber-500 text-white shadow-xs">
+                    Featured
+                  </span>
+                </div>
+              )}
 
               {/* Top-right Condition pill */}
-              <div className="absolute top-2.5 right-2.5">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/85 backdrop-blur-md border border-white/70 text-slate-700 capitalize shadow-xs">
-                  {item.condition}
-                </span>
-              </div>
+              {item.condition && (
+                <div className="absolute top-2.5 right-2.5">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/85 backdrop-blur-md border border-white/70 text-slate-700 capitalize shadow-xs">
+                    {item.condition}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Content Area */}
@@ -153,7 +127,7 @@ export async function FeaturedListings() {
                   ) : (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 border border-purple-200 text-purple-700">
                       <Sparkles className="w-3 h-3 text-purple-600" />
-                      <span>Trusted Seller</span>
+                      <span>Campus Seller</span>
                     </span>
                   )}
 

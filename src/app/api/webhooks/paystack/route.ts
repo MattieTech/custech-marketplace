@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         await supabase
           .from('profiles')
           .update({ verification_status: 'paid' })
-          .eq('id', userId);
+          .eq('user_id', userId);
 
         await supabase
           .from('wallet_transactions')
@@ -88,9 +88,70 @@ export async function POST(req: NextRequest) {
           .insert({
             user_id: userId,
             title: 'Payment Successful',
-            message: 'Your verification fee has been received and your request is under review.',
+            body: 'Your verification fee has been received and your request is under review.',
             type: 'payment'
           });
+      } else if (type === 'wallet_funding') {
+        const nairaAmount = amount / 100;
+
+        // Idempotency check on reference
+        const { data: existingTx } = await supabase
+          .from('wallet_transactions')
+          .select('id')
+          .eq('reference', reference)
+          .maybeSingle();
+
+        if (existingTx) {
+          return NextResponse.json({ message: 'Already processed' }, { status: 200 });
+        }
+
+        // Get or create wallet
+        let { data: wallet } = await supabase
+          .from('wallets')
+          .select('id, balance')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (!wallet) {
+          const { data: newWallet } = await supabase
+            .from('wallets')
+            .insert({ user_id: userId, balance: 0 })
+            .select('id, balance')
+            .single();
+          wallet = newWallet;
+        }
+
+        if (wallet) {
+          const newBalance = Number(wallet.balance) + nairaAmount;
+          await supabase
+            .from('wallets')
+            .update({ 
+              balance: newBalance,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', wallet.id);
+
+          await supabase
+            .from('wallet_transactions')
+            .insert({
+              wallet_id: wallet.id,
+              user_id: userId,
+              type: 'credit',
+              amount: nairaAmount,
+              balance_after: Math.round(newBalance),
+              reference: reference,
+              description: 'Wallet top-up via Paystack',
+            });
+
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: userId,
+              title: 'Wallet Funded Successfully',
+              body: `Your wallet has been credited with ₦${nairaAmount.toLocaleString()}. Current balance: ₦${newBalance.toLocaleString()}.`,
+              type: 'wallet_credit'
+            });
+        }
       } else if (type === 'marketplace_transaction') {
         // Handle marketplace transactions here in the future
       }

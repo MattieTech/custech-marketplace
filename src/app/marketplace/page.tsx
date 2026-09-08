@@ -19,7 +19,8 @@ async function getListings(searchParams: any) {
     .from('listings')
     .select(`
       *,
-      profiles:seller_id(*),
+      category:categories(name, slug),
+      seller:profiles!user_id(user_id, display_name, avatar_url, verification_status, trust_level),
       listing_images(url)
     `)
     .eq('listing_type', 'product')
@@ -82,7 +83,10 @@ async function getListings(searchParams: any) {
   
   let filteredData = data || [];
   if (searchParams.verifiedSeller === 'true') {
-    filteredData = filteredData.filter((item: any) => item.profiles?.is_verified);
+    filteredData = filteredData.filter((item: any) => {
+      const s = Array.isArray(item.seller) ? item.seller[0] : item.seller;
+      return s?.verification_status === 'approved';
+    });
   }
 
   return { data: filteredData, error, count };

@@ -11,7 +11,9 @@ import {
   Scale, 
   ChartBar, 
   FileText,
-  ChevronLeft
+  ChevronLeft,
+  UserCheck,
+  Package
 } from 'lucide-react';
 import { ReactNode } from 'react';
 
@@ -25,7 +27,9 @@ interface NavItem {
 const navItems: NavItem[] = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, roles: ['super_admin', 'moderator', 'finance_admin', 'verification_officer', 'support_agent'] },
   { name: 'Users', href: '/admin/users', icon: Users, roles: ['super_admin', 'moderator', 'finance_admin', 'verification_officer', 'support_agent'] },
+  { name: 'Admin Roles', href: '/admin/roles', icon: UserCheck, roles: ['super_admin'] },
   { name: 'Listings', href: '/admin/listings', icon: ShoppingBag, roles: ['super_admin', 'moderator'] },
+  { name: 'Orders & Escrow', href: '/admin/orders', icon: Package, roles: ['super_admin', 'finance_admin', 'support_agent'] },
   { name: 'Verification', href: '/admin/verification', icon: ShieldCheck, roles: ['super_admin', 'verification_officer'] },
   { name: 'Reports', href: '/admin/reports', icon: Flag, roles: ['super_admin', 'moderator'] },
   { name: 'Transactions', href: '/admin/transactions', icon: CreditCard, roles: ['super_admin', 'finance_admin'] },
@@ -40,7 +44,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   
   // Basic user details fetch for header
   const supabase = await createClient();
-  const { data: profile } = await supabase.from('profiles').select('display_name, avatar_url').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('display_name, avatar_url').eq('user_id', user.id).maybeSingle();
 
   const allowedNavItems = navItems.filter(item => item.roles.includes(role));
 

@@ -15,16 +15,16 @@ import { cn } from '@/lib/utils';
 
 export default function Home() {
   const categories = [
-    { name: 'Phones', icon: Smartphone, href: '/marketplace?category=phones', iconColor: 'text-blue-500', count: '234 listings' },
-    { name: 'Laptops', icon: Laptop, href: '/marketplace?category=laptops', iconColor: 'text-purple-500', count: '87 listings' },
-    { name: 'Books', icon: BookOpen, href: '/marketplace?category=books', iconColor: 'text-emerald-500', count: '312 listings' },
-    { name: 'Fashion', icon: Shirt, href: '/marketplace?category=clothes', iconColor: 'text-amber-500', count: '198 listings' },
-    { name: 'Housing', icon: House, href: '/housing', iconColor: 'text-blue-600', count: '318 listings' },
-    { name: 'Repairs', icon: Wrench, href: '/services?category=repairs', iconColor: 'text-rose-500', count: '64 listings' },
-    { name: 'Food', icon: UtensilsCrossed, href: '/marketplace?category=food', iconColor: 'text-amber-600', count: '89 listings' },
-    { name: 'Design', icon: Palette, href: '/services?category=design', iconColor: 'text-purple-600', count: '143 listings' },
-    { name: 'Deals', icon: Zap, href: '/deals', iconColor: 'text-emerald-500', count: '76 listings' },
-    { name: 'Free Items', icon: Gift, href: '/free-items', iconColor: 'text-indigo-500', count: '55 listings' },
+    { name: 'Phones', icon: Smartphone, href: '/marketplace?category=phones', iconColor: 'text-blue-500', subtitle: 'Phones' },
+    { name: 'Laptops', icon: Laptop, href: '/marketplace?category=laptops', iconColor: 'text-purple-500', subtitle: 'Computers' },
+    { name: 'Books', icon: BookOpen, href: '/marketplace?category=books', iconColor: 'text-emerald-500', subtitle: 'Textbooks' },
+    { name: 'Fashion', icon: Shirt, href: '/marketplace?category=clothes', iconColor: 'text-amber-500', subtitle: 'Clothing' },
+    { name: 'Housing', icon: House, href: '/housing', iconColor: 'text-blue-600', subtitle: 'Lodges' },
+    { name: 'Repairs', icon: Wrench, href: '/services?category=repairs', iconColor: 'text-rose-500', subtitle: 'Fixes' },
+    { name: 'Food', icon: UtensilsCrossed, href: '/marketplace?category=food', iconColor: 'text-amber-600', subtitle: 'Campus Meals' },
+    { name: 'Design', icon: Palette, href: '/services?category=design', iconColor: 'text-purple-600', subtitle: 'Creative' },
+    { name: 'Deals', icon: Zap, href: '/deals', iconColor: 'text-emerald-500', subtitle: 'Discounts' },
+    { name: 'Free Items', icon: Gift, href: '/free-items', iconColor: 'text-indigo-500', subtitle: 'Donations' },
   ];
 
   return (
@@ -169,7 +169,7 @@ export default function Home() {
                   {category.name}
                 </span>
                 <span className="text-[10px] sm:text-[11px] text-slate-400 font-normal mt-0.5">
-                  {category.count}
+                  {category.subtitle}
                 </span>
               </Link>
             ))}

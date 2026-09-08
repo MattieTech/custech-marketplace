@@ -525,3 +525,131 @@ export async function resolveDispute(disputeId: string, resolution: string) {
   return { success: true };
 }
 
+// ==========================================
+// 6. ADMIN RBAC MANAGEMENT
+// ==========================================
+
+export async function assignAdminRole(targetUserId: string, role: string) {
+  const { user } = await checkAdminAccess(['super_admin']);
+  const adminClient = await createAdminClient();
+
+  const validRoles = ['super_admin', 'moderator', 'finance_admin', 'verification_officer', 'support_agent'];
+  if (!validRoles.includes(role)) {
+    throw new Error('Invalid administrative role specified.');
+  }
+
+  // Upsert into admin_roles
+  const { error: roleError } = await adminClient
+    .from('admin_roles')
+    .upsert({
+      user_id: targetUserId,
+      role: role
+    }, { onConflict: 'user_id' });
+
+  if (roleError) {
+    console.error('assignAdminRole error:', roleError);
+    throw new Error(roleError.message);
+  }
+
+  // Update profile role column if present
+  await adminClient
+    .from('profiles')
+    .update({ role: role, updated_at: new Date().toISOString() })
+    .eq('user_id', targetUserId);
+
+  await adminClient.from('notifications').insert({
+    user_id: targetUserId,
+    type: 'role_granted',
+    title: 'Administrative Role Assigned',
+    body: `You have been granted the ${role.replace('_', ' ')} role on the CUSTECH administration portal.`
+  });
+
+  await logAdminAction(user.id, 'assign_admin_role', 'user', targetUserId, { role });
+  revalidatePath('/admin/roles');
+  revalidatePath('/admin/users');
+  revalidatePath(`/admin/users/${targetUserId}`);
+  return { success: true };
+}
+
+export async function revokeAdminRole(targetUserId: string) {
+  const { user } = await checkAdminAccess(['super_admin']);
+
+  if (targetUserId === user.id) {
+    throw new Error('You cannot revoke your own super administrator privileges.');
+  }
+
+  const adminClient = await createAdminClient();
+
+  await adminClient
+    .from('admin_roles')
+    .delete()
+    .eq('user_id', targetUserId);
+
+  await adminClient
+    .from('profiles')
+    .update({ role: 'student', updated_at: new Date().toISOString() })
+    .eq('user_id', targetUserId);
+
+  await adminClient.from('notifications').insert({
+    user_id: targetUserId,
+    type: 'role_revoked',
+    title: 'Administrative Access Revoked',
+    body: 'Your administrative privileges on CUSTECH Marketplace have been revoked.'
+  });
+
+  await logAdminAction(user.id, 'revoke_admin_role', 'user', targetUserId);
+  revalidatePath('/admin/roles');
+  revalidatePath('/admin/users');
+  revalidatePath(`/admin/users/${targetUserId}`);
+  return { success: true };
+}
+
+// ==========================================
+// 7. ADMIN ESCROW ORDER RESOLUTION
+// ==========================================
+
+export async function resolveEscrowOrder(
+  orderId: string, 
+  action: 'release_to_seller' | 'refund_to_buyer', 
+  notes: string
+) {
+  const { user } = await checkAdminAccess(['super_admin', 'finance_admin']);
+  const adminClient = await createAdminClient();
+
+  if (action === 'release_to_seller') {
+    const { data: rpcRes, error: rpcError } = await adminClient.rpc('release_escrow_funds', {
+      p_order_id: orderId,
+      p_caller_id: user.id
+    });
+
+    if (rpcError || !rpcRes?.success) {
+      throw new Error(rpcError?.message || rpcRes?.error || 'Failed to release escrow funds.');
+    }
+
+    await adminClient
+      .from('escrow_orders')
+      .update({ resolution_notes: notes, resolved_by: user.id })
+      .eq('id', orderId);
+  } else if (action === 'refund_to_buyer') {
+    const { data: rpcRes, error: rpcError } = await adminClient.rpc('refund_escrow_order', {
+      p_order_id: orderId,
+      p_caller_id: user.id,
+      p_reason: notes || 'Administrative dispute refund.'
+    });
+
+    if (rpcError || !rpcRes?.success) {
+      throw new Error(rpcError?.message || rpcRes?.error || 'Failed to refund escrow order.');
+    }
+
+    await adminClient
+      .from('escrow_orders')
+      .update({ resolution_notes: notes, resolved_by: user.id })
+      .eq('id', orderId);
+  }
+
+  await logAdminAction(user.id, 'resolve_escrow_order', 'escrow_order', orderId, { action, notes });
+  revalidatePath('/admin/orders');
+  return { success: true };
+}
+
+

@@ -3,156 +3,28 @@ import Link from 'next/link';
 import { PageContainer } from '@/components/layout/page-container';
 import { ServiceCard, ServiceItem } from '@/components/services/service-card';
 import { createClient } from '@/lib/supabase/server';
-import { Briefcase, ShieldCheck, PlusCircle } from 'lucide-react';
+import { Search, Briefcase, ShieldCheck, Sparkles, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const metadata = {
-  title: 'Services - CUSTECH Marketplace',
-  description: 'Hire verified student developers, designers, tutors, and service providers within CUSTECH.',
+  title: 'Student Services - CUSTECH Marketplace',
+  description: 'Verified freelance services offered by talented students at Confluence University.',
 };
-
-// Fallback high-fidelity sample services strictly matching the reference screenshot
-const DEFAULT_SERVICES: ServiceItem[] = [
-  {
-    id: 'service-1',
-    title: 'Professional Web Development & Design',
-    description: 'Full-stack web development using React, Next.js, and Node.js. Portfolio websites, business sites, and web applications built to professional standards.',
-    tags: ['React', 'Next.js', 'Node.js'],
-    price: 25000,
-    price_prefix: 'From',
-    is_featured: true,
-    provider_name: 'Chidi Okafor',
-    provider_initials: 'CO',
-    provider_badge: 'Trusted Seller',
-    provider_type: 'trusted',
-    rating: 4.9,
-    reviews_count: 31,
-    jobs_done: 28,
-    delivery_time: '3',
-    delivery_label: 'Delivery',
-    image_url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'service-2',
-    title: 'Graphic Design — Logos, Flyers & Brand Identity',
-    description: 'Creative graphic design services for students and businesses. Logos, event flyers, social media graphics, and complete brand identity packages.',
-    tags: ['Logo Design', 'Flyers', 'Branding'],
-    price: 5000,
-    price_prefix: 'From',
-    is_featured: true,
-    provider_name: 'Amaka Nwosu',
-    provider_initials: 'AN',
-    provider_badge: 'Trusted Seller',
-    provider_type: 'trusted',
-    rating: 4.8,
-    reviews_count: 47,
-    jobs_done: 44,
-    delivery_time: '1',
-    delivery_label: 'Delivery',
-    image_url: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'service-3',
-    title: 'Academic Tutoring — Mathematics & Sciences',
-    description: 'One-on-one and group tutoring for university-level Mathematics, Physics, Chemistry, and Engineering courses. Exam preparation and assignment help.',
-    tags: ['Mathematics', 'Physics', 'Chemistry'],
-    price: 3000,
-    price_prefix: 'From',
-    is_featured: false,
-    provider_name: 'Ibrahim Suleiman',
-    provider_initials: 'IS',
-    provider_badge: 'CUSTECH Verified',
-    provider_type: 'verified',
-    rating: 4.7,
-    reviews_count: 19,
-    jobs_done: 56,
-    delivery_time: 'Per session',
-    delivery_label: 'Delivery',
-    image_url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'service-4',
-    title: 'Event Photography & Campus Video Shoots',
-    description: 'Professional coverage for campus events, matriculation, graduation, departmental dinners, and personal portrait sessions with high-resolution editing.',
-    tags: ['Photography', 'Videography', 'Portraits'],
-    price: 10000,
-    price_prefix: 'From',
-    is_featured: false,
-    provider_name: 'David Alabi',
-    provider_initials: 'DA',
-    provider_badge: 'CUSTECH Verified',
-    provider_type: 'verified',
-    rating: 4.9,
-    reviews_count: 38,
-    jobs_done: 52,
-    delivery_time: '2',
-    delivery_label: 'Delivery',
-    image_url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'service-5',
-    title: 'Hardware & Phone Screen Repair — Fast Delivery',
-    description: 'Expert diagnostic and repairs for iPhone, Samsung, laptops, charging ports, broken screens, and operating system reinstalls right near campus.',
-    tags: ['Phone Repair', 'Laptops', 'Hardware'],
-    price: 4000,
-    price_prefix: 'From',
-    is_featured: false,
-    provider_name: 'Samuel Momoh',
-    provider_initials: 'SM',
-    provider_badge: 'Trusted Seller',
-    provider_type: 'trusted',
-    rating: 4.6,
-    reviews_count: 24,
-    jobs_done: 39,
-    delivery_time: 'Same day',
-    delivery_label: 'Delivery',
-    image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'service-6',
-    title: 'Laundry & Hostel Dry Cleaning Express',
-    description: 'Doorstep pickup and clean delivery for student laundry, beddings, curtains, and native wears. Crisp ironing and hygienic washing guaranteed.',
-    tags: ['Laundry', 'Dry Cleaning', 'Express'],
-    price: 2500,
-    price_prefix: 'From',
-    is_featured: false,
-    provider_name: 'Zainab Ahmed',
-    provider_initials: 'ZA',
-    provider_badge: 'CUSTECH Verified',
-    provider_type: 'verified',
-    rating: 4.8,
-    reviews_count: 62,
-    jobs_done: 87,
-    delivery_time: '24 hrs',
-    delivery_label: 'Delivery',
-    image_url: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=800&q=80',
-  },
-];
-
-const SERVICE_CATEGORIES = [
-  { label: 'All Services', value: 'all' },
-  { label: 'Tech & Coding', value: 'tech' },
-  { label: 'Graphic Design', value: 'design' },
-  { label: 'Tutoring', value: 'tutoring' },
-  { label: 'Photography', value: 'photography' },
-  { label: 'Repairs', value: 'repairs' },
-  { label: 'Laundry & Cleaning', value: 'laundry' },
-];
 
 export default async function ServicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string }> | { category?: string; q?: string };
+  searchParams: Promise<{ category?: string; q?: string }>;
 }) {
   const resolvedParams = await searchParams;
   const activeCategory = resolvedParams?.category || 'all';
   const query = (resolvedParams?.q || '').toLowerCase().trim();
 
-  let services: ServiceItem[] = DEFAULT_SERVICES;
+  let services: ServiceItem[] = [];
 
   try {
     const supabase = await createClient();
-    const { data: dbServices } = await supabase
+    let dbQuery = supabase
       .from('listings')
       .select(`
         id,
@@ -161,18 +33,32 @@ export default async function ServicesPage({
         price,
         is_featured,
         created_at,
-        services:services(*),
-        seller:profiles(full_name, is_verified),
+        category:categories(name, slug),
+        services(*),
+        seller:profiles!user_id(display_name, verification_status, avatar_url, rating_avg, rating_count),
         images:listing_images(url)
       `)
       .eq('listing_type', 'service')
-      .eq('status', 'active');
+      .eq('status', 'active')
+      .order('is_featured', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (query) {
+      dbQuery = dbQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
+    }
+
+    const { data: dbServices, error } = await dbQuery;
+
+    if (error) {
+      console.error('Error fetching services:', error);
+    }
 
     if (dbServices && dbServices.length > 0) {
-      const mappedDbServices = dbServices.map((item: any, idx: number) => {
-        const s = item.services?.[0] || item.services || {};
-        const fallback = DEFAULT_SERVICES[idx % DEFAULT_SERVICES.length];
-        const sellerName = item.seller?.full_name || fallback.provider_name;
+      services = dbServices.map((item: any) => {
+        const s = Array.isArray(item.services) ? item.services[0] || {} : item.services || {};
+        const sellerProfile = Array.isArray(item.seller) ? item.seller[0] || {} : item.seller || {};
+        const categoryName = item.category?.name || 'Freelance';
+        const sellerName = sellerProfile.display_name || 'Campus Student';
         const initials = sellerName
           .split(' ')
           .filter(Boolean)
@@ -180,34 +66,35 @@ export default async function ServicesPage({
           .map((n: string) => n[0]?.toUpperCase())
           .join('') || 'CU';
 
+        const isVerified = sellerProfile.verification_status === 'approved';
+
         return {
           id: item.id,
-          title: item.title || fallback.title,
-          description: item.description || fallback.description,
-          tags: fallback.tags,
-          price: item.price ? Number(item.price) : fallback.price,
+          title: item.title,
+          description: item.description,
+          tags: [categoryName, isVerified ? 'Verified Student' : 'Campus Service'],
+          price: item.price ? Number(item.price) : (s.starting_price || 0),
           price_prefix: 'From',
           is_featured: Boolean(item.is_featured),
           provider_name: sellerName,
           provider_initials: initials,
-          provider_badge: item.seller?.is_verified ? ('CUSTECH Verified' as const) : fallback.provider_badge,
-          provider_type: item.seller?.is_verified ? ('verified' as const) : fallback.provider_type,
-          rating: fallback.rating,
-          reviews_count: fallback.reviews_count,
-          jobs_done: s.completed_jobs || fallback.jobs_done,
-          delivery_time: s.delivery_time || fallback.delivery_time,
+          provider_badge: isVerified ? ('CUSTECH Verified' as const) : ('Trusted Seller' as const),
+          provider_type: isVerified ? ('verified' as const) : ('trusted' as const),
+          rating: Number(sellerProfile.rating_avg || 5.0),
+          reviews_count: sellerProfile.rating_count || 0,
+          jobs_done: s.completed_jobs || 0,
+          delivery_time: s.delivery_time || '1-3 days',
           delivery_label: 'Delivery',
-          image_url: item.images?.[0]?.url || fallback.image_url,
+          image_url: item.images?.[0]?.url || '',
         };
       });
-
-      services = [...mappedDbServices, ...DEFAULT_SERVICES];
     }
   } catch (err) {
-    // Keep fallback list
+    console.error('Failed to load services:', err);
+    services = [];
   }
 
-  // Filter by category
+  // Filter by category if specified
   if (activeCategory && activeCategory !== 'all') {
     services = services.filter((s) => {
       const cat = activeCategory.toLowerCase();
@@ -219,95 +106,118 @@ export default async function ServicesPage({
     });
   }
 
-  // Filter by query
-  if (query) {
-    services = services.filter(
-      (s) =>
-        s.title.toLowerCase().includes(query) ||
-        s.description.toLowerCase().includes(query) ||
-        s.tags.some((tag) => tag.toLowerCase().includes(query)) ||
-        s.provider_name.toLowerCase().includes(query)
-    );
-  }
+  const serviceCategories = [
+    { label: 'All Services', value: 'all' },
+    { label: 'Graphic Design', value: 'graphic' },
+    { label: 'Web & Tech', value: 'web' },
+    { label: 'Repairs', value: 'repair' },
+    { label: 'Hair & Beauty', value: 'hair' },
+    { label: 'Tutoring', value: 'tutoring' },
+    { label: 'Printing & Binding', value: 'printing' },
+  ];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] py-8 sm:py-10">
       <PageContainer>
-        {/* Header Area */}
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold mb-2">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Verified Student Freelancers & Artisans</span>
+              <span>Campus Freelance Directory</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              CUSTECH Student Services
+            <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Student Skills & Services
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-              Hire verified student developers, designers, tutors, and artisans within the Confluence University community.
+              Hire verified CUSTECH students for tech repairs, graphic design, tutoring, laundry, and styling.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button asChild className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-xs h-10 px-4">
-              <Link href="/dashboard/services/new">
-                <PlusCircle className="w-4 h-4 mr-1.5" />
-                <span>Offer a Service</span>
-              </Link>
+          <Link href="/dashboard/services/new">
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-2xl gap-2 shadow-md">
+              <PlusCircle className="w-4 h-4" />
+              <span>Offer a Service</span>
             </Button>
+          </Link>
+        </div>
+
+        {/* Search and Category Filter Strip */}
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-3 sm:p-4 mb-8 shadow-xs space-y-3">
+          <form method="GET" action="/services" className="flex flex-col sm:flex-row items-center gap-2.5">
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                name="q"
+                defaultValue={resolvedParams?.q || ''}
+                placeholder="Search services (e.g. typing, laptop repair, haircut, logo)..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-emerald-500 transition-all"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full sm:w-auto px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-2xl transition-all shadow-xs shrink-0"
+            >
+              Search
+            </button>
+          </form>
+
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide pt-1">
+            {serviceCategories.map((category) => {
+              const isSelected = activeCategory === category.value;
+              return (
+                <Link
+                  key={category.value}
+                  href={`/services?category=${category.value}${query ? `&q=${encodeURIComponent(query)}` : ''}`}
+                  className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    isSelected
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {category.label}
+                </Link>
+              );
+            })}
           </div>
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-3 pt-1 scrollbar-none border-b border-slate-200/80 mb-6">
-          {SERVICE_CATEGORIES.map((cat) => {
-            const isActive = activeCategory.toLowerCase() === cat.value.toLowerCase();
-            const href = cat.value === 'all' ? '/services' : `/services?category=${encodeURIComponent(cat.value)}`;
-            return (
-              <Link
-                key={cat.value}
-                href={href}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                  isActive
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-white border border-slate-200/90 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
-                }`}
-              >
-                {cat.label}
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Counter matching screenshot */}
-        <div className="flex items-center justify-between mb-5 text-xs text-slate-500">
-          <span className="font-semibold text-slate-700">
-            {services.length} {services.length === 1 ? 'service' : 'services'} available
-          </span>
-          <span className="text-slate-400">
-            Quality guaranteed by student peer reviews
-          </span>
-        </div>
-
-        {/* 3-Column Grid matching reference screenshot */}
+        {/* Services Grid or Clean Empty State */}
         {services.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {services.map((service) => (
               <ServiceCard key={service.id} service={service} />
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center max-w-md mx-auto my-12">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto text-slate-400 mb-3">
-              <Briefcase className="w-6 h-6" />
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center max-w-lg mx-auto shadow-xs space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-100">
+              <Briefcase className="w-7 h-7" />
             </div>
-            <h3 className="font-bold text-slate-800 text-base">No services found</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Try choosing another category or clearing your search filters.
-            </p>
-            <Button asChild variant="outline" size="sm" className="mt-4 rounded-xl text-xs font-bold">
-              <Link href="/services">View All Services</Link>
-            </Button>
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-slate-900">No Services Listed Yet</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                {query || activeCategory !== 'all'
+                  ? 'No campus student services matched your search. Try a different keyword or category.'
+                  : 'Be the first verified student to post your skills and earn income on campus!'}
+              </p>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
+              <Link href="/dashboard/services/new">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs">
+                  <PlusCircle className="w-4 h-4 mr-1.5" /> Post Your Service
+                </Button>
+              </Link>
+              {(query || activeCategory !== 'all') && (
+                <Link href="/services">
+                  <Button variant="outline" className="text-xs font-semibold rounded-xl">
+                    Clear Filters
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         )}
       </PageContainer>

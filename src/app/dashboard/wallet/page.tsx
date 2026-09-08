@@ -2,158 +2,268 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatPrice, formatDate } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/client';
-import { ArrowUpRight, ArrowDownRight, Wallet, ExternalLink } from 'lucide-react';
 import { CustechLogoLoader } from '@/components/ui/custech-loader';
-import { toast } from '@/components/ui/toast';
-
-type Transaction = {
-  id: string;
-  type: string;
-  amount: number;
-  description: string;
-  created_at: string;
-  reference: string;
-};
+import { 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Wallet, 
+  Send, 
+  PlusCircle, 
+  Building2, 
+  Clock, 
+  ShieldCheck, 
+  Receipt,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
+import { getWalletData, WalletData } from './actions';
+import { P2PTransferModal } from '@/components/wallet/p2p-transfer-modal';
+import { FundWalletModal } from '@/components/wallet/fund-wallet-modal';
+import { WithdrawModal } from '@/components/wallet/withdraw-modal';
 
 export default function WalletPage() {
-  const router = useRouter();
-  const [balance, setBalance] = useState(0);
-  const [pendingBalance, setPendingBalance] = useState(0);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const handleWithdraw = () => {
-    if (balance <= 0) {
-      toast.info('Your available balance is ₦0.00. Funds will appear here when your completed sales or referrals are cleared.', 'Zero Balance');
-      return;
+  // Modals state
+  const [isP2POpen, setIsP2POpen] = useState(false);
+  const [isFundOpen, setIsFundOpen] = useState(false);
+  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    const res = await getWalletData();
+    if (res.success && res.data) {
+      setWalletData(res.data);
     }
-    toast.success('Redirecting to your payout settings to confirm your bank account...', 'Payout Request');
-    router.push('/dashboard/settings');
+    setLoading(false);
   };
 
   useEffect(() => {
-    async function loadWallet() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
-
-      const { data: txs, error } = await supabase
-        .from('wallet_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (!error && txs) {
-        setTransactions(txs);
-        
-        let available = 0;
-        let pending = 0;
-        
-        txs.forEach((tx: any) => {
-          if (tx.status === 'pending') {
-            pending += tx.amount;
-          } else {
-            available += tx.amount;
-          }
-        });
-
-        setBalance(available);
-        setPendingBalance(pending);
-      }
-      setLoading(false);
-    }
-    loadWallet();
+    loadData();
   }, []);
 
-  if (loading) {
+  if (loading && !walletData) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <CustechLogoLoader mode="in-app" size="md" message="Loading student wallet balances..." />
+        <CustechLogoLoader mode="in-app" size="md" message="Loading your CUSTECH wallet..." />
       </div>
     );
   }
 
+  const balance = walletData?.balance || 0;
+  const pendingEscrow = walletData?.pendingEscrowBalance || 0;
+  const transactions = walletData?.transactions || [];
+
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Wallet</h1>
-        <p className="text-gray-600 mt-2">Manage your funds and view transaction history.</p>
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Student Wallet</h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+          Manage your campus funds, send peer-to-peer payments, and track escrow settlements.
+        </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card className="p-6 bg-gradient-to-br from-green-500 to-green-600 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium opacity-90">Available Balance</h2>
-            <Wallet className="h-6 w-6 opacity-80" />
+      {/* Balance Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        {/* Available Balance Card */}
+        <Card className="p-6 rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white shadow-lg relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-48 h-48 bg-white/10 rounded-full blur-2xl -mr-12 -mt-12 pointer-events-none" />
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-100 flex items-center gap-1.5">
+              <Wallet className="w-4 h-4" />
+              <span>Available Balance</span>
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-xs">
+              Instant P2P & Escrow
+            </span>
           </div>
-          <p className="text-4xl font-bold mb-6">{formatPrice(balance)}</p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
-              variant="secondary" 
-              onClick={handleWithdraw}
-              className="flex-1 bg-white text-green-700 hover:bg-gray-100 font-semibold"
+
+          <p className="text-3xl sm:text-4xl font-black tracking-tight mb-6 relative z-10">
+            {formatPrice(balance)}
+          </p>
+
+          <div className="grid grid-cols-3 gap-2 relative z-10">
+            <Button
+              onClick={() => setIsFundOpen(true)}
+              className="bg-white hover:bg-emerald-50 text-emerald-800 font-bold text-xs rounded-xl shadow-xs py-2 px-1 flex items-center justify-center gap-1"
             >
-              Request Payout / Withdraw
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Top Up</span>
             </Button>
-            <Button 
-              variant="outline" 
-              asChild
-              className="border-white/50 text-white hover:bg-white/20 hover:text-white"
+            <Button
+              onClick={() => setIsP2POpen(true)}
+              className="bg-emerald-800/80 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl border border-emerald-500/40 py-2 px-1 flex items-center justify-center gap-1"
             >
-              <Link href="/dashboard/settings">
-                Bank Settings
-              </Link>
+              <Send className="w-3.5 h-3.5" />
+              <span>Transfer</span>
+            </Button>
+            <Button
+              onClick={() => setIsWithdrawOpen(true)}
+              className="bg-emerald-900/60 hover:bg-emerald-900 text-white font-bold text-xs rounded-xl border border-emerald-500/30 py-2 px-1 flex items-center justify-center gap-1"
+            >
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              <span>Withdraw</span>
             </Button>
           </div>
         </Card>
-        
-        <Card className="p-6 border-dashed border-2 flex flex-col justify-center">
-          <h2 className="text-lg font-medium text-gray-600 mb-2">Pending Balance</h2>
-          <p className="text-3xl font-semibold text-gray-900">{formatPrice(pendingBalance)}</p>
-          <p className="text-sm text-gray-500 mt-2">Funds held securely in escrow</p>
+
+        {/* Pending Escrow Balance Card */}
+        <Card className="p-6 rounded-3xl border-slate-200/90 bg-white shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-amber-500" />
+                <span>Pending Escrow Sales</span>
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                In Transit / Inspection
+              </span>
+            </div>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              {formatPrice(pendingEscrow)}
+            </p>
+            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+              Funds locked in active buyer escrow orders. Automatically credited to your available balance when buyers confirm inspection.
+            </p>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+            <Link
+              href="/dashboard/orders"
+              className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
+            >
+              <Receipt className="w-3.5 h-3.5" />
+              <span>View Active Orders</span>
+            </Link>
+            <Link
+              href="/dashboard/settings"
+              className="text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center gap-1"
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Bank Settings</span>
+            </Link>
+          </div>
         </Card>
       </div>
 
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
-        
-        <Card>
+      {/* Transaction History Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">Wallet Ledger & History</h2>
+          <span className="text-xs text-slate-400 font-medium">{transactions.length} transactions</span>
+        </div>
+
+        <Card className="rounded-3xl border-slate-200/90 bg-white overflow-hidden shadow-xs">
           {transactions.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              No transactions found.
+            <div className="p-12 text-center">
+              <Wallet className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm font-bold text-slate-700">No transactions recorded yet</p>
+              <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                Fund your wallet to make instant purchases or receive funds from sales and peer transfers.
+              </p>
+              <Button
+                onClick={() => setIsFundOpen(true)}
+                className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+              >
+                Top Up Your Wallet
+              </Button>
             </div>
           ) : (
-            <div className="divide-y">
-              {transactions.map((tx) => (
-                <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.amount > 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                      {tx.amount > 0 ? (
-                        <ArrowDownRight className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <ArrowUpRight className="h-5 w-5 text-red-600" />
-                      )}
+            <div className="divide-y divide-slate-100">
+              {transactions.map((tx) => {
+                const isCredit = tx.type === 'credit' || (tx.amount > 0 && tx.type !== 'debit');
+                return (
+                  <div
+                    key={tx.id}
+                    className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50/70 transition-colors"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div
+                        className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                          isCredit
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                            : 'bg-rose-50 text-rose-600 border border-rose-200'
+                        }`}
+                      >
+                        {isCredit ? (
+                          <ArrowDownRight className="w-5 h-5" />
+                        ) : (
+                          <ArrowUpRight className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-bold text-slate-900 leading-tight">
+                          {tx.description || (isCredit ? 'Credit Transfer' : 'Debit Transfer')}
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                          <span>{formatDate(tx.created_at)}</span>
+                          {tx.reference && (
+                            <>
+                              <span>•</span>
+                              <span className="font-mono text-[10px] truncate max-w-[140px] sm:max-w-none">
+                                Ref: {tx.reference}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{tx.description}</p>
-                      <p className="text-sm text-gray-500">{formatDate(tx.created_at)} • Ref: {tx.reference.substring(0, 8)}...</p>
+
+                    <div className="text-right">
+                      <p
+                        className={`text-sm font-black tracking-tight ${
+                          isCredit ? 'text-emerald-600' : 'text-slate-900'
+                        }`}
+                      >
+                        {isCredit ? '+' : ''}
+                        {formatPrice(Math.abs(tx.amount))}
+                      </p>
+                      <span
+                        className={`inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-md ${
+                          tx.status === 'completed'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : tx.status === 'pending'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800'
+                        }`}
+                      >
+                        {tx.status || 'completed'}
+                      </span>
                     </div>
                   </div>
-                  <div className={`font-semibold ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {tx.amount > 0 ? '+' : ''}{formatPrice(tx.amount)}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>
       </div>
+
+      {/* P2P Transfer Modal */}
+      <P2PTransferModal
+        isOpen={isP2POpen}
+        onClose={() => setIsP2POpen(false)}
+        senderBalance={balance}
+        onTransferSuccess={loadData}
+      />
+
+      {/* Fund Wallet Modal */}
+      <FundWalletModal
+        isOpen={isFundOpen}
+        onClose={() => setIsFundOpen(false)}
+      />
+
+      {/* Withdraw Modal */}
+      <WithdrawModal
+        isOpen={isWithdrawOpen}
+        onClose={() => setIsWithdrawOpen(false)}
+        availableBalance={balance}
+        bankDetails={walletData?.bankDetails || { bankName: null, accountNumber: null, accountName: null }}
+        onWithdrawSuccess={loadData}
+      />
     </div>
   );
 }

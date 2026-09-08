@@ -1,19 +1,32 @@
-import PageContainer from '@/components/layout/page-container';
+import { notFound } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { PageContainer } from '@/components/layout/page-container';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
-import { formatPrice, getInitials } from '@/lib/utils';
-import { MapPin, ShieldCheck, Flag, Phone, Calendar, Info } from 'lucide-react';
-
+import { formatPrice, getInitials, formatDate } from '@/lib/utils';
+import { MapPin, ShieldCheck, Flag, Phone, Calendar, Info, MessageCircle, ChevronLeft, Building, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import { ShareButton } from '@/components/marketplace/share-button';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: prop } = await supabase.from('listings').select('title, description').eq('id', id).maybeSingle();
+  return {
+    title: prop ? `${prop.title} - CUSTECH Hostels & Housing` : 'Accommodation Not Found',
+    description: prop?.description?.slice(0, 160),
+  };
+}
 
 export default async function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 
   // Fetch real property from Supabase
-  const { data: realProperty } = await supabase
+  const { data: realProperty, error } = await supabase
     .from('listings')
     .select(`
       id,
@@ -21,110 +34,193 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
       description,
       price,
       location,
+      view_count,
       created_at,
       user_id,
       properties(*),
       images:listing_images(url),
-      profiles:profiles!seller_id(display_name, avatar_url, verification_status)
+      seller:profiles!user_id(user_id, display_name, avatar_url, verification_status, phone, whatsapp_number, rating_avg)
     `)
     .eq('id', id)
+    .eq('listing_type', 'housing')
     .maybeSingle();
 
-  const prop = realProperty ? {
-    title: realProperty.title,
-    description: realProperty.description,
-    images: realProperty.images?.map((img: any) => img.url) || [],
-    properties: {
-      property_type: (realProperty.properties as any)?.property_type?.replace('_', ' ') || 'Hostel Room',
-      rent: realProperty.price || (realProperty.properties as any)?.rent_per_year || 150000,
-      rooms: 1,
-      distance: (realProperty.properties as any)?.distance_to_campus || 'Near Campus',
-      amenities: ['Water', 'Electricity', 'Security'],
-      availability_date: 'Available Now'
-    },
-    profiles: {
-      full_name: (realProperty.profiles as any)?.display_name || 'Hostel Manager / Student',
-      is_verified: (realProperty.profiles as any)?.verification_status === 'approved',
-      avatar_url: (realProperty.profiles as any)?.avatar_url || ''
-    }
-  } : {
-    title: 'Self-Contained Room near Main Gate',
-    description: 'A spacious self-contained room with running water and security.',
-    images: [],
-    properties: { property_type: 'Self-Contained', rent: 150000, rooms: 1, distance: '5 mins walk', amenities: ['Water', 'Security', 'Electricity'], availability_date: 'Available Now' },
-    profiles: { full_name: 'Campus Hostel Agent', is_verified: true, avatar_url: '' }
-  };
+  if (error || !realProperty) {
+    notFound();
+  }
+
+  const h = Array.isArray(realProperty.properties) ? realProperty.properties[0] || {} : realProperty.properties || {};
+  const seller = Array.isArray(realProperty.seller) ? realProperty.seller[0] || {} : realProperty.seller || {};
+  const images = (realProperty.images || []).map((img: any) => img.url).filter(Boolean);
+  const mainImage = images[0] || '';
+
+  const propertyType = (h.property_type || 'Hostel Room').replace(/_/g, ' ');
+  const rent = realProperty.price ? Number(realProperty.price) : (h.rent || 0);
+  const cautionFee = h.additional_fees?.caution_fee;
+  const serviceCharge = h.additional_fees?.service_charge;
+  const amenities = h.amenities || ['Running Water', 'Electricity', 'Security'];
 
   return (
     <PageContainer>
-      <div className="space-y-6">
-        <div className="aspect-[21/9] bg-muted rounded-xl flex items-center justify-center text-muted-foreground">
-          Image Gallery
+      <div className="py-6 sm:py-8 space-y-6 max-w-6xl mx-auto">
+        {/* Navigation Breadcrumb */}
+        <div className="flex items-center justify-between">
+          <Link href="/housing" className="inline-flex items-center text-xs sm:text-sm font-semibold text-slate-500 hover:text-emerald-700 transition-colors">
+            <ChevronLeft className="w-4 h-4 mr-1" /> Back to Hostels & Housing
+          </Link>
+          <ShareButton title={realProperty.title} />
         </div>
-        
+
+        {/* Hero Image Section */}
+        <div className="space-y-3">
+          <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full bg-slate-100 rounded-3xl overflow-hidden border border-slate-200">
+            {mainImage ? (
+              <img src={mainImage} alt={realProperty.title} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-2">
+                <Building className="w-12 h-12 stroke-[1.5]" />
+                <span className="text-xs font-semibold">Campus Accommodation Photo</span>
+              </div>
+            )}
+            <div className="absolute top-4 left-4 flex gap-2">
+              <span className="px-3 py-1 bg-emerald-600 text-white rounded-full text-xs font-bold shadow-md capitalize">
+                {propertyType}
+              </span>
+              {seller.verification_status === 'approved' && (
+                <span className="px-3 py-1 bg-white/90 backdrop-blur-md text-emerald-800 rounded-full text-xs font-bold shadow-md flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Verified Hosteler
+                </span>
+              )}
+            </div>
+          </div>
+
+          {images.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {images.map((url: string, idx: number) => (
+                <div key={idx} className="relative w-24 h-20 rounded-2xl overflow-hidden border border-slate-200 shrink-0">
+                  <img src={url} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Main Details Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div>
-              <Badge className="mb-2">{prop.properties.property_type}</Badge>
-              <h1 className="text-3xl font-bold">{prop.title}</h1>
-              <div className="text-3xl font-bold text-emerald-600 mt-2">
-                {formatPrice(prop.properties.rent)} <span className="text-lg font-normal text-muted-foreground">/yr</span>
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-4 shadow-xs">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {realProperty.title}
+              </h1>
+
+              <div className="text-2xl sm:text-3xl font-black text-emerald-700">
+                {formatPrice(rent)} <span className="text-sm sm:text-base font-normal text-slate-400">/year</span>
               </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span>{prop.properties.distance}</span>
+
+              <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>{realProperty.location || h.distance_from_campus || 'Osara Campus Area'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>Available: {h.availability_date || 'Now'}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>{prop.properties.availability_date}</span>
+
+              {/* Fee Breakdown if specified */}
+              {(cautionFee || serviceCharge) && (
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  {cautionFee && (
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Caution Fee</span>
+                      <span className="text-sm font-black text-slate-800 mt-0.5 block">{formatPrice(cautionFee)}</span>
+                    </div>
+                  )}
+                  {serviceCharge && (
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Service Charge</span>
+                      <span className="text-sm font-black text-slate-800 mt-0.5 block">{formatPrice(serviceCharge)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-4 border-t border-slate-100 space-y-2">
+                <h3 className="text-base font-bold text-slate-900">Accommodation Description</h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                  {realProperty.description}
+                </p>
               </div>
-            </div>
-            
-            <div className="prose max-w-none">
-              <h3 className="text-xl font-semibold mb-2">Description</h3>
-              <p>{prop.description}</p>
-            </div>
-            
-            <div className="space-y-3">
-              <h3 className="text-xl font-semibold">Amenities</h3>
-              <div className="flex flex-wrap gap-2">
-                {prop.properties.amenities.map(a => (
-                  <Badge key={a} variant="secondary">{a}</Badge>
-                ))}
+
+              <div className="pt-4 border-t border-slate-100 space-y-2.5">
+                <h3 className="text-base font-bold text-slate-900">Amenities & Features</h3>
+                <div className="flex flex-wrap gap-2">
+                  {amenities.map((amenity: string, idx: number) => (
+                    <span key={idx} className="px-3 py-1 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold">
+                      {amenity}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-          
-          <div className="space-y-6">
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <h3 className="font-semibold text-lg">Contact Landlord</h3>
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12" src={prop.profiles.avatar_url} fallback={getInitials(prop.profiles.full_name)} />
+
+          {/* Right Column: Landlord Card & Direct Contact */}
+          <div className="space-y-5">
+            <Card className="rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <CardContent className="p-6 space-y-5">
+                <h3 className="font-bold text-base text-slate-900">Lister Information</h3>
+                
+                <div className="flex items-center gap-3.5">
+                  <Avatar 
+                    className="h-14 w-14 rounded-2xl border-2 border-emerald-100" 
+                    src={seller.avatar_url} 
+                    fallback={getInitials(seller.display_name || 'Landlord')} 
+                  />
                   <div>
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium">{prop.profiles.full_name}</span>
-                      {prop.profiles.is_verified && <ShieldCheck className="h-4 w-4 text-emerald-500" />}
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-sm text-slate-900">{seller.display_name || 'Campus Lister'}</span>
+                      {seller.verification_status === 'approved' && <ShieldCheck className="h-4 w-4 text-emerald-600" />}
                     </div>
+                    <span className="text-xs text-slate-400 block mt-0.5">
+                      {seller.verification_status === 'approved' ? 'Verified CUSTECH Member' : 'Campus Member'}
+                    </span>
                   </div>
                 </div>
-                <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
-                  <Phone className="mr-2 h-4 w-4" />
-                  Contact
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <Flag className="mr-2 h-4 w-4" />
-                  Report Property
-                </Button>
+
+                <div className="space-y-2 pt-2">
+                  <Link href={`/messages?user=${realProperty.user_id}`} className="block w-full">
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 rounded-2xl shadow-xs gap-2">
+                      <MessageCircle className="h-4 w-4" /> Message Lister
+                    </Button>
+                  </Link>
+                  {seller.whatsapp_number && (
+                    <a 
+                      href={`https://wa.me/234${seller.whatsapp_number.replace(/^0/, '')}?text=${encodeURIComponent(`Hello, I saw your accommodation listing "${realProperty.title}" on CUSTECH Marketplace.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full"
+                    >
+                      <Button variant="outline" className="w-full border-green-600/40 text-green-800 hover:bg-green-50 font-bold text-xs h-10 rounded-2xl gap-2">
+                        <Phone className="h-4 w-4 text-green-600" /> WhatsApp Chat
+                      </Button>
+                    </a>
+                  )}
+                  <Link href={`/profile/${realProperty.user_id}`} className="block w-full">
+                    <Button variant="ghost" className="w-full text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-2xl">
+                      View Lister Profile & Other Listings
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
-            
-            <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 flex gap-3 text-amber-800 text-sm">
-              <Info className="h-5 w-5 shrink-0 text-amber-600" />
-              <p>Safety notice: Always visit properties in person before making payments. Never pay without proper documentation.</p>
+
+            <div className="bg-amber-50/80 p-4 rounded-3xl border border-amber-200/80 flex gap-3 text-amber-900 text-xs leading-relaxed">
+              <Info className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+              <p>
+                <strong>Campus Safety Advisory:</strong> Always conduct physical inspection of the lodge or hostel before making any payments. We advise meeting during daylight hours.
+              </p>
             </div>
           </div>
         </div>

@@ -1,10 +1,16 @@
 import { createClient } from '@/lib/supabase/server';
 import { PageContainer } from '@/components/layout/page-container';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tag, Calendar, Sparkles, Percent, ArrowRight, Store } from 'lucide-react';
+import { Tag, Calendar, Percent, ArrowRight, Store, Zap, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { formatPrice } from '@/lib/utils';
+
+export const metadata = {
+  title: 'Discounts & Deals - CUSTECH Marketplace',
+  description: 'Exclusive campus student discounts, promotions, and merchant vouchers at CUSTECH.',
+};
 
 export default async function DealsPage() {
   const supabase = await createClient();
@@ -15,129 +21,104 @@ export default async function DealsPage() {
       id,
       title,
       description,
-      original_price,
       deal_price,
-      discount_percentage,
-      starts_at,
-      expires_at,
-      businesses:business_id(id, name, address)
+      terms,
+      start_date,
+      end_date,
+      business_id,
+      businesses:business_id(id, name, location)
     `)
     .eq('is_active', true)
     .order('created_at', { ascending: false });
 
-  const campusDeals = (dbDeals && dbDeals.length > 0) ? dbDeals.map((d: any) => ({
-    id: d.id,
-    title: d.title,
-    description: d.description,
-    business_id: d.businesses?.id || '1',
-    business_name: d.businesses?.name || 'Campus Merchant',
-    discount: d.discount_percentage ? `${d.discount_percentage}% OFF` : 'Special Deal',
-    deal_price: d.deal_price,
-    expires_at: d.expires_at ? new Date(d.expires_at).toLocaleDateString() : 'Ongoing',
-    terms: 'Valid with active CUSTECH student identity.'
-  })) : [
-    {
-      id: '1',
-      title: '50% off all Project Spiral Binding',
-      description: 'Get your final year projects, manuals, and seminar papers bound at half price this semester.',
-      business_id: '1',
-      business_name: 'CUSTECH Print Hub',
-      discount: '50% OFF',
-      deal_price: 500,
-      expires_at: 'Ongoing',
-      terms: 'Valid for registered students with student ID.'
-    },
-    {
-      id: '2',
-      title: 'Buy 2 Phone Accessories, Get 1 Free',
-      description: 'Screen protectors, charging cables, and OTG adapters bundle for Osara campus students.',
-      business_id: '1',
-      business_name: 'Osara Tech Gadgets',
-      discount: 'Buy 2 Get 1',
-      deal_price: 1500,
-      expires_at: 'Exam Period',
-      terms: 'Available while promotional stock lasts.'
-    },
-    {
-      id: '3',
-      title: '20% Student Meal Voucher',
-      description: 'Enjoy 20% discount on all lunch packs and smoothies near the Student Union Building.',
-      business_id: '1',
-      business_name: 'Campus Kitchen & Grills',
-      discount: '20% OFF',
-      deal_price: 1200,
-      expires_at: 'This Week',
-      terms: 'Show voucher on phone at checkout counter.'
-    }
-  ];
+  const campusDeals = (dbDeals && dbDeals.length > 0) ? dbDeals.map((d: any) => {
+    const biz = Array.isArray(d.businesses) ? d.businesses[0] : d.businesses;
+    return {
+      id: d.id,
+      title: d.title,
+      description: d.description,
+      business_id: d.business_id,
+      business_name: biz?.name || 'Campus Merchant',
+      deal_price: d.deal_price,
+      expires_at: d.end_date ? new Date(d.end_date).toLocaleDateString() : 'Ongoing',
+      terms: d.terms || 'Valid with active CUSTECH student identity.'
+    };
+  }) : [];
 
   return (
     <PageContainer>
-      <div className="py-8 space-y-8 max-w-6xl mx-auto px-4 sm:px-0">
-        {/* Header */}
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Campus Discounts & Vouchers</span>
+      <div className="py-8 space-y-8 max-w-5xl mx-auto px-4 sm:px-0">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-600 text-xs font-semibold">
+              <Zap className="w-3.5 h-3.5" />
+              <span>Campus Discounts & Offers</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+              Student Deals & Vouchers
+            </h1>
+            <p className="text-sm text-slate-500 max-w-xl">
+              Exclusive student discounts on tech accessories, printing, food, and salon services across Osara campus.
+            </p>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-            Exclusive Student Deals
-          </h1>
-          <p className="text-sm text-slate-500 max-w-xl">
-            Verified student promotions, food discounts, print vouchers, and device bargains across CUSTECH campus.
-          </p>
+
+          <Link href="/dashboard/business">
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-2xl gap-2 shadow-sm">
+              <PlusCircle className="w-4 h-4" />
+              <span>Post Deal for Business</span>
+            </Button>
+          </Link>
         </div>
 
-        {/* Deals Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {campusDeals.map((deal) => (
-            <Card 
-              key={deal.id} 
-              className="rounded-3xl border-slate-200/80 bg-white shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 overflow-hidden flex flex-col justify-between"
-            >
-              <div>
-                <CardHeader className="p-5 pb-3 bg-gradient-to-r from-rose-500/10 via-pink-500/5 to-transparent border-b border-slate-100">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1">
-                      <Store className="w-3.5 h-3.5" />
-                      {deal.business_name}
-                    </span>
-                    <Badge className="bg-rose-600 text-white text-[10px] font-black rounded-lg">
-                      {deal.discount}
-                    </Badge>
+        {campusDeals.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {campusDeals.map((deal) => (
+              <Card key={deal.id} className="rounded-3xl border-slate-200/80 bg-white shadow-xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge className="bg-red-50 text-red-600 border-red-200 font-bold text-xs gap-1">
+                        <Percent className="w-3 h-3" /> Special Deal
+                      </Badge>
+                      <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> {deal.expires_at}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-base text-slate-900">{deal.title}</h3>
                   </div>
-                  <h3 className="font-black text-lg text-slate-900 pt-2 leading-tight">
-                    {deal.title}
-                  </h3>
-                </CardHeader>
 
-                <CardContent className="p-5 space-y-3">
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
                     {deal.description}
                   </p>
 
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Validity: <strong>{deal.expires_at}</strong></span>
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-500">
-                    <span className="font-semibold text-slate-700">T&C:</span> {deal.terms}
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Offered by</span>
+                      <Link href={`/businesses/${deal.business_id}`} className="text-xs font-bold text-emerald-700 hover:underline">
+                        {deal.business_name}
+                      </Link>
+                    </div>
+                    {deal.deal_price && (
+                      <span className="text-base font-black text-slate-900">{formatPrice(deal.deal_price)}</span>
+                    )}
                   </div>
                 </CardContent>
-              </div>
-
-              <CardFooter className="p-5 pt-0">
-                <Button asChild className="w-full h-10 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-xs">
-                  <Link href={`/businesses/${deal.business_id}`}>
-                    <span>Claim & View Business</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center max-w-lg mx-auto shadow-xs space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto border border-red-100">
+              <Zap className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-slate-900">No Active Deals Right Now</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Check back soon for seasonal student discounts, clearance sales, and exam period promotions from campus merchants!
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </PageContainer>
   );

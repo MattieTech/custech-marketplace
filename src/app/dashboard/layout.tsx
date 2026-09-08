@@ -16,6 +16,10 @@ import {
   Settings,
   TrendingUp,
   LogOut,
+  Package,
+  Bookmark,
+  AlertTriangle,
+  ArrowRight,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
@@ -34,7 +38,7 @@ export default function DashboardLayout({
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle();
         setUser({ ...user, profile });
       }
     };
@@ -49,6 +53,8 @@ export default function DashboardLayout({
   const navLinks: { name: string; href: string; icon: any; comingSoon?: boolean }[] = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { name: 'My Listings', href: '/dashboard/listings', icon: ShoppingBag },
+    { name: 'Orders & Escrow', href: '/dashboard/orders', icon: Package },
+    { name: 'Saved Items', href: '/dashboard/saved', icon: Bookmark },
     { name: 'Analytics', href: '/dashboard/analytics', icon: TrendingUp },
     { name: 'Messages', href: '/messages', icon: MessageCircle },
     { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
@@ -186,7 +192,29 @@ export default function DashboardLayout({
         </div>
 
         {/* Dashboard Page Body with Safe Bottom Padding */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-32 sm:pb-16 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-32 sm:pb-16 max-w-7xl w-full mx-auto space-y-6">
+          {user && user.profile && !user.profile.is_verified && (
+            <div className="rounded-2xl bg-amber-50 border border-amber-200/80 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-amber-600 mt-0.5 sm:mt-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-amber-900 tracking-tight">Student Account Not Verified</h3>
+                  <p className="text-xs text-amber-700 mt-0.5 font-medium leading-relaxed">
+                    Verify your CUSTECH matriculation credentials to unlock the verified badge, post unlimited listings, and use buyer/seller escrow protection.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/dashboard/verification"
+                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-colors"
+              >
+                <span>Verify Now</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          )}
           {children}
         </main>
       </div>

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { PageContainer } from '@/components/layout/page-container';
 import { PublicProfileView } from '@/components/profile/public-profile-view';
+import { getProfileStatistics } from '@/app/profile/actions';
 
 export default async function ProfilePage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params;
@@ -69,6 +70,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
     }));
   }
 
+  const stats = await getProfileStatistics(profile.user_id);
+
   return (
     <PageContainer>
       <PublicProfileView 
@@ -78,6 +81,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
         properties={properties}
         services={services}
         reviews={reviewsWithProfiles}
+        stats={stats}
       />
     </PageContainer>
   );

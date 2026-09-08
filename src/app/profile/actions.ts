@@ -13,12 +13,12 @@ export async function toggleFollowUser(targetUserId: string) {
 
   const admin = await createAdminClient();
 
-  // Resolve targetUserId to valid auth user_id if profiles.id was passed
+  // Resolve targetUserId to valid auth user_id if profiles.id or username was passed
   let resolvedTargetId = targetUserId;
   const { data: targetProfile } = await admin
     .from('profiles')
     .select('user_id, id, display_name')
-    .or(`user_id.eq.${targetUserId},id.eq.${targetUserId}`)
+    .or(`user_id.eq.${targetUserId},id.eq.${targetUserId},referral_code.ilike.${targetUserId}`)
     .maybeSingle();
 
   if (targetProfile?.user_id) {
@@ -29,68 +29,33 @@ export async function toggleFollowUser(targetUserId: string) {
     throw new Error('You cannot follow yourself.');
   }
 
-  // 1. Try checking user_follows table first
-  let alreadyFollowing = false;
-  let useFollowsTable = true;
-
-  try {
-    const { data: followRecord, error: checkErr } = await admin
-      .from('user_follows')
-      .select('id')
-      .eq('follower_id', user.id)
-      .eq('following_id', resolvedTargetId)
-      .maybeSingle();
-
-    if (checkErr) {
-      useFollowsTable = false;
-    } else {
-      alreadyFollowing = !!followRecord;
-    }
-  } catch {
-    useFollowsTable = false;
-  }
-
-  // Fallback to notifications follow records if user_follows table not present
-  if (!useFollowsTable) {
-    const { data: notifRecords } = await admin
-      .from('notifications')
-      .select('id')
-      .eq('user_id', resolvedTargetId)
-      .eq('type', 'user_follow')
-      .contains('data', { follower_id: user.id });
-
-    alreadyFollowing = (notifRecords && notifRecords.length > 0) || false;
-  }
+  // Check user_follows table
+  const { data: followRecord } = await admin
+    .from('user_follows')
+    .select('id')
+    .eq('follower_id', user.id)
+    .eq('following_id', resolvedTargetId)
+    .maybeSingle();
 
   let isFollowing = false;
 
-  if (alreadyFollowing) {
+  if (followRecord) {
     // UNFOLLOW
-    if (useFollowsTable) {
-      await admin
-        .from('user_follows')
-        .delete()
-        .eq('follower_id', user.id)
-        .eq('following_id', resolvedTargetId);
-    } else {
-      await admin
-        .from('notifications')
-        .delete()
-        .eq('user_id', resolvedTargetId)
-        .eq('type', 'user_follow')
-        .contains('data', { follower_id: user.id });
-    }
+    await admin
+      .from('user_follows')
+      .delete()
+      .eq('follower_id', user.id)
+      .eq('following_id', resolvedTargetId);
+
     isFollowing = false;
   } else {
     // FOLLOW
-    if (useFollowsTable) {
-      await admin
-        .from('user_follows')
-        .insert([{
-          follower_id: user.id,
-          following_id: resolvedTargetId,
-        }]);
-    }
+    await admin
+      .from('user_follows')
+      .insert([{
+        follower_id: user.id,
+        following_id: resolvedTargetId,
+      }]);
 
     // Record notification for the user who was followed
     const { data: myProfile } = await admin
@@ -120,6 +85,8 @@ export async function toggleFollowUser(targetUserId: string) {
   // Revalidate profile pages
   revalidatePath(`/profile/${targetUserId}`);
   revalidatePath(`/profile/${resolvedTargetId}`);
+  revalidatePath('/dashboard/followers');
+  revalidatePath('/dashboard/following');
 
   return {
     isFollowing,
@@ -132,7 +99,6 @@ export async function toggleFollowUser(targetUserId: string) {
 export async function getFollowStats(targetUserId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
   const admin = await createAdminClient();
 
   // Resolve targetUserId
@@ -140,7 +106,7 @@ export async function getFollowStats(targetUserId: string) {
   const { data: targetProfile } = await admin
     .from('profiles')
     .select('user_id')
-    .or(`user_id.eq.${targetUserId},id.eq.${targetUserId}`)
+    .or(`user_id.eq.${targetUserId},id.eq.${targetUserId},referral_code.ilike.${targetUserId}`)
     .maybeSingle();
 
   if (targetProfile?.user_id) {
@@ -151,7 +117,6 @@ export async function getFollowStats(targetUserId: string) {
   let followingCount = 0;
   let isFollowing = false;
 
-  // Try user_follows table first
   try {
     const [followersRes, followingRes, checkRes] = await Promise.all([
       admin.from('user_follows').select('id', { count: 'exact', head: true }).eq('following_id', resolvedTargetId),
@@ -159,36 +124,12 @@ export async function getFollowStats(targetUserId: string) {
       user ? admin.from('user_follows').select('id').eq('follower_id', user.id).eq('following_id', resolvedTargetId).maybeSingle() : Promise.resolve({ data: null, error: null }),
     ]);
 
-    if (!followersRes.error && !followingRes.error) {
-      followersCount = followersRes.count || 0;
-      followingCount = followingRes.count || 0;
-      isFollowing = !!checkRes?.data;
-      return { followersCount, followingCount, isFollowing };
-    }
-  } catch {}
-
-  // Fallback to notifications follow records
-  try {
-    const { count: fCount } = await admin
-      .from('notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', resolvedTargetId)
-      .eq('type', 'user_follow');
-
-    followersCount = fCount || 0;
-
-    if (user) {
-      const { data: hasFollowed } = await admin
-        .from('notifications')
-        .select('id')
-        .eq('user_id', resolvedTargetId)
-        .eq('type', 'user_follow')
-        .contains('data', { follower_id: user.id })
-        .limit(1);
-
-      isFollowing = !!(hasFollowed && hasFollowed.length > 0);
-    }
-  } catch {}
+    followersCount = followersRes.count || 0;
+    followingCount = followingRes.count || 0;
+    isFollowing = !!checkRes?.data;
+  } catch (err) {
+    console.error('Error fetching follow stats:', err);
+  }
 
   return { followersCount, followingCount, isFollowing };
 }
@@ -201,7 +142,7 @@ export async function getFollowersAndFollowingUsers(targetUserId: string) {
   const { data: targetProfile } = await admin
     .from('profiles')
     .select('user_id')
-    .or(`user_id.eq.${targetUserId},id.eq.${targetUserId}`)
+    .or(`user_id.eq.${targetUserId},id.eq.${targetUserId},referral_code.ilike.${targetUserId}`)
     .maybeSingle();
 
   if (targetProfile?.user_id) {
@@ -211,7 +152,6 @@ export async function getFollowersAndFollowingUsers(targetUserId: string) {
   let followersUsers: any[] = [];
   let followingUsers: any[] = [];
 
-  // Try user_follows table
   try {
     const { data: followersRows } = await admin
       .from('user_follows')
@@ -242,35 +182,52 @@ export async function getFollowersAndFollowingUsers(targetUserId: string) {
 
       followingUsers = profiles || [];
     }
-
-    if (followersUsers.length > 0 || followingUsers.length > 0) {
-      return { followers: followersUsers, following: followingUsers };
-    }
-  } catch {}
-
-  // Fallback to notifications follow records
-  try {
-    const { data: notifFollowers } = await admin
-      .from('notifications')
-      .select('data')
-      .eq('user_id', resolvedTargetId)
-      .eq('type', 'user_follow');
-
-    if (notifFollowers && notifFollowers.length > 0) {
-      const followerIds = notifFollowers
-        .map(n => n.data?.follower_id)
-        .filter(Boolean);
-
-      if (followerIds.length > 0) {
-        const { data: profiles } = await admin
-          .from('profiles')
-          .select('id, user_id, display_name, avatar_url, department, verification_status')
-          .in('user_id', followerIds);
-
-        followersUsers = profiles || [];
-      }
-    }
-  } catch {}
+  } catch (err) {
+    console.error('Error fetching follow lists:', err);
+  }
 
   return { followers: followersUsers, following: followingUsers };
+}
+
+export async function getProfileStatistics(userId: string) {
+  const admin = await createAdminClient();
+
+  let resolvedUserId = userId;
+  const { data: prof } = await admin
+    .from('profiles')
+    .select('user_id, completed_transactions, trust_level, rating_avg, rating_count')
+    .or(`user_id.eq.${userId},id.eq.${userId},referral_code.ilike.${userId}`)
+    .maybeSingle();
+
+  if (prof?.user_id) {
+    resolvedUserId = prof.user_id;
+  }
+
+  // 1. Listings & view counts
+  const { data: listings } = await admin
+    .from('listings')
+    .select('id, view_count, likes_count')
+    .or(`seller_id.eq.${resolvedUserId},user_id.eq.${resolvedUserId}`)
+    .eq('status', 'active');
+
+  const listingsCount = listings?.length || 0;
+  const totalViews = (listings || []).reduce((acc: number, curr: any) => acc + (curr.view_count || 0), 0);
+  const totalLikes = (listings || []).reduce((acc: number, curr: any) => acc + (curr.likes_count || 0), 0);
+
+  // 2. Follow counts
+  const [followersRes, followingRes] = await Promise.all([
+    admin.from('user_follows').select('id', { count: 'exact', head: true }).eq('following_id', resolvedUserId),
+    admin.from('user_follows').select('id', { count: 'exact', head: true }).eq('follower_id', resolvedUserId),
+  ]);
+
+  return {
+    listingsCount,
+    totalViews,
+    totalLikes,
+    followersCount: followersRes.count || 0,
+    followingCount: followingRes.count || 0,
+    completedDeals: prof?.completed_transactions || 0,
+    ratingAvg: Number(prof?.rating_avg || 5.0).toFixed(1),
+    ratingCount: prof?.rating_count || 0,
+  };
 }

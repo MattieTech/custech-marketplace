@@ -39,6 +39,14 @@ interface PublicProfileViewProps {
   properties: any[];
   services: any[];
   reviews: any[];
+  stats?: {
+    listingsCount?: number;
+    totalViews?: number;
+    totalLikes?: number;
+    followersCount?: number;
+    followingCount?: number;
+    completedDeals?: number;
+  };
 }
 
 export function PublicProfileView({
@@ -48,6 +56,7 @@ export function PublicProfileView({
   properties,
   services,
   reviews,
+  stats,
 }: PublicProfileViewProps) {
   const [copied, setCopied] = useState(false);
   const isOwnProfile = currentUserId === profile.user_id;
@@ -177,34 +186,48 @@ export function PublicProfileView({
             </div>
           </div>
 
-          {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-100">
+          {/* Quick Metrics Bar - Real Database Values */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-4 border-t border-slate-100">
             <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Trust Score</span>
-              <span className="text-base font-black text-slate-900 capitalize mt-0.5 block">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Trust Score</span>
+              <span className="text-sm font-black text-slate-900 capitalize mt-0.5 block">
                 {profile.trust_level?.replace('_', ' ') || 'Registered'}
               </span>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Deals Completed</span>
-              <span className="text-base font-black text-slate-900 mt-0.5 block">
-                {profile.completed_transactions || 0}
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Deals Done</span>
+              <span className="text-sm font-black text-slate-900 mt-0.5 block">
+                {stats?.completedDeals ?? profile.completed_transactions ?? 0}
               </span>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Rating</span>
-              <span className="text-base font-black text-amber-600 flex items-center gap-1 mt-0.5">
-                <Star className="w-4 h-4 fill-current" />
-                {Number(profile.rating_avg || 5.0).toFixed(1)} <span className="text-xs text-slate-400 font-normal">({profile.rating_count || 0})</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Listings</span>
+              <span className="text-sm font-black text-emerald-700 mt-0.5 block">
+                {stats?.listingsCount ?? (listings.length + properties.length + services.length)}
               </span>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Active Listings</span>
-              <span className="text-base font-black text-emerald-600 mt-0.5 block">
-                {listings.length + properties.length + services.length}
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Views</span>
+              <span className="text-sm font-black text-slate-900 mt-0.5 block">
+                {stats?.totalViews ?? 0}
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Likes Received</span>
+              <span className="text-sm font-black text-rose-600 mt-0.5 block">
+                {stats?.totalLikes ?? 0}
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Rating</span>
+              <span className="text-sm font-black text-amber-600 flex items-center gap-1 mt-0.5">
+                <Star className="w-3.5 h-3.5 fill-current" />
+                {Number(profile.rating_avg || 5.0).toFixed(1)} <span className="text-[11px] text-slate-400 font-normal">({profile.rating_count || 0})</span>
               </span>
             </div>
           </div>
