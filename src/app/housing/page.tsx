@@ -28,6 +28,7 @@ export default async function HousingPage({
       .from('listings')
       .select(`
         id,
+        user_id,
         title,
         description,
         price,
@@ -36,7 +37,6 @@ export default async function HousingPage({
         view_count,
         created_at,
         properties(*),
-        seller:profiles!user_id(display_name, verification_status, avatar_url, rating_avg, rating_count),
         images:listing_images(url)
       `)
       .eq('listing_type', 'housing')
@@ -55,9 +55,20 @@ export default async function HousingPage({
     }
 
     if (dbProps && dbProps.length > 0) {
+      const userIds = [...new Set(dbProps.map((l: any) => l.user_id).filter(Boolean))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, verification_status, avatar_url, rating_avg, rating_count')
+        .in('user_id', userIds);
+
+      const profileMap = (profiles || []).reduce((acc: any, p: any) => {
+        acc[p.user_id] = p;
+        return acc;
+      }, {});
+
       properties = dbProps.map((item: any) => {
         const h = Array.isArray(item.properties) ? item.properties[0] || {} : item.properties || {};
-        const sellerProfile = Array.isArray(item.seller) ? item.seller[0] || {} : item.seller || {};
+        const sellerProfile = profileMap[item.user_id] || {};
         const sellerName = sellerProfile.display_name || 'Campus Student / Hosteler';
         const initials = sellerName
           .split(' ')

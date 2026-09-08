@@ -38,8 +38,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
       created_at,
       user_id,
       properties(*),
-      images:listing_images(url),
-      seller:profiles!user_id(user_id, display_name, avatar_url, verification_status, phone, whatsapp_number, rating_avg)
+      images:listing_images(url)
     `)
     .eq('id', id)
     .eq('listing_type', 'housing')
@@ -49,8 +48,17 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
     notFound();
   }
 
+  let seller: any = {};
+  if (realProperty.user_id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url, verification_status, phone, whatsapp_number, rating_avg')
+      .eq('user_id', realProperty.user_id)
+      .maybeSingle();
+    seller = profile || {};
+  }
+
   const h = Array.isArray(realProperty.properties) ? realProperty.properties[0] || {} : realProperty.properties || {};
-  const seller = Array.isArray(realProperty.seller) ? realProperty.seller[0] || {} : realProperty.seller || {};
   const images = (realProperty.images || []).map((img: any) => img.url).filter(Boolean);
   const mainImage = images[0] || '';
 

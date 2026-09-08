@@ -12,13 +12,13 @@ export async function FeaturedListings() {
       .from('listings')
       .select(`
         id,
+        user_id,
         title,
         price,
         condition,
         location,
         is_featured,
         created_at,
-        seller:profiles!user_id(display_name, verification_status, trust_level, rating_avg),
         images:listing_images(url)
       `)
       .eq('status', 'active')
@@ -27,8 +27,19 @@ export async function FeaturedListings() {
       .limit(4);
 
     if (dbListings && dbListings.length > 0) {
+      const userIds = [...new Set(dbListings.map((l: any) => l.user_id).filter(Boolean))];
+      const { data: profiles } = await admin
+        .from('profiles')
+        .select('user_id, display_name, verification_status, trust_level, rating_avg')
+        .in('user_id', userIds);
+
+      const profileMap = (profiles || []).reduce((acc: any, p: any) => {
+        acc[p.user_id] = p;
+        return acc;
+      }, {});
+
       displayListings = dbListings.map((item: any) => {
-        const sellerProfile = Array.isArray(item.seller) ? item.seller[0] : item.seller;
+        const sellerProfile = profileMap[item.user_id] || null;
         return {
           id: item.id,
           title: item.title,

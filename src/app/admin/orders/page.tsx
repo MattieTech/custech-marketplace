@@ -14,13 +14,36 @@ export default async function AdminOrdersPage() {
     .from('escrow_orders')
     .select(`
       *,
-      listing:listings(id, title, price, images),
-      buyer:profiles!buyer_id(user_id, display_name, avatar_url, whatsapp_number),
-      seller:profiles!seller_id(user_id, display_name, avatar_url, whatsapp_number)
+      listing:listings(id, title, price, images)
     `)
     .order('created_at', { ascending: false });
 
-  const orders = rawOrders || [];
+  const rawList = rawOrders || [];
+  const userIds = [
+    ...new Set([
+      ...rawList.map((o: any) => o.buyer_id),
+      ...rawList.map((o: any) => o.seller_id)
+    ].filter(Boolean))
+  ];
+
+  let profileMap: Record<string, any> = {};
+  if (userIds.length > 0) {
+    const { data: profiles } = await adminClient
+      .from('profiles')
+      .select('user_id, display_name, avatar_url, whatsapp_number')
+      .in('user_id', userIds);
+
+    profileMap = (profiles || []).reduce((acc: any, p: any) => {
+      acc[p.user_id] = p;
+      return acc;
+    }, {});
+  }
+
+  const orders = rawList.map((o: any) => ({
+    ...o,
+    buyer: profileMap[o.buyer_id] || null,
+    seller: profileMap[o.seller_id] || null,
+  }));
 
   // Compute summary stats
   const totalLockedAmount = orders

@@ -20,7 +20,6 @@ async function getListings(searchParams: any) {
     .select(`
       *,
       category:categories(name, slug),
-      seller:profiles!user_id(user_id, display_name, avatar_url, verification_status, trust_level),
       listing_images(url)
     `)
     .eq('listing_type', 'product')
@@ -43,10 +42,10 @@ async function getListings(searchParams: any) {
     }
   }
   if (searchParams.minPrice) {
-    query = query.gte('price', parseInt(searchParams.minPrice) * 100);
+    query = query.gte('price', parseInt(searchParams.minPrice));
   }
   if (searchParams.maxPrice) {
-    query = query.lte('price', parseInt(searchParams.maxPrice) * 100);
+    query = query.lte('price', parseInt(searchParams.maxPrice));
   }
   if (searchParams.condition) {
     const rawConditions = searchParams.condition.split(',');
@@ -81,7 +80,26 @@ async function getListings(searchParams: any) {
 
   const { data, error, count } = await query;
   
-  let filteredData = data || [];
+  let listings = data || [];
+  if (listings.length > 0) {
+    const userIds = [...new Set(listings.map((l: any) => l.user_id).filter(Boolean))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url, verification_status, trust_level')
+      .in('user_id', userIds);
+
+    const profileMap = (profiles || []).reduce((acc: any, p: any) => {
+      acc[p.user_id] = p;
+      return acc;
+    }, {});
+
+    listings = listings.map((item: any) => ({
+      ...item,
+      seller: profileMap[item.user_id] || null,
+    }));
+  }
+
+  let filteredData = listings;
   if (searchParams.verifiedSeller === 'true') {
     filteredData = filteredData.filter((item: any) => {
       const s = Array.isArray(item.seller) ? item.seller[0] : item.seller;

@@ -59,8 +59,7 @@ export async function getUserOrders(): Promise<{
       .from('escrow_orders')
       .select(`
         *,
-        listing:listings(id, title, price, images),
-        seller:profiles!seller_id(user_id, display_name, avatar_url, whatsapp_number, phone)
+        listing:listings(id, title, price, images)
       `)
       .eq('buyer_id', user.id)
       .order('created_at', { ascending: false });
@@ -74,8 +73,7 @@ export async function getUserOrders(): Promise<{
       .from('escrow_orders')
       .select(`
         *,
-        listing:listings(id, title, price, images),
-        buyer:profiles!buyer_id(user_id, display_name, avatar_url, whatsapp_number, phone)
+        listing:listings(id, title, price, images)
       `)
       .eq('seller_id', user.id)
       .order('created_at', { ascending: false });
@@ -84,43 +82,60 @@ export async function getUserOrders(): Promise<{
       console.error('Error fetching sales:', sError);
     }
 
-    const mapOrder = (order: any, isPurchase: boolean): EscrowOrderDetails => ({
-      id: order.id,
-      orderNumber: order.order_number,
-      buyerId: order.buyer_id,
-      sellerId: order.seller_id,
-      listingId: order.listing_id,
-      amount: Number(order.amount),
-      currency: order.currency || 'NGN',
-      status: order.status,
-      paymentMethod: order.payment_method,
-      fundedAt: order.funded_at,
-      shippedAt: order.shipped_at,
-      deliveredAt: order.delivered_at,
-      completedAt: order.completed_at,
-      disputedAt: order.disputed_at,
-      cancelledAt: order.cancelled_at,
-      disputeReason: order.dispute_reason,
-      buyerNotes: order.buyer_notes,
-      sellerNotes: order.seller_notes,
-      createdAt: order.created_at,
-      listing: order.listing || null,
-      counterparty: isPurchase
-        ? (order.seller ? {
-            userId: order.seller.user_id,
-            displayName: order.seller.display_name || 'Seller',
-            avatarUrl: order.seller.avatar_url || null,
-            whatsappNumber: order.seller.whatsapp_number || null,
-            phone: order.seller.phone || null,
-          } : null)
-        : (order.buyer ? {
-            userId: order.buyer.user_id,
-            displayName: order.buyer.display_name || 'Buyer',
-            avatarUrl: order.buyer.avatar_url || null,
-            whatsappNumber: order.buyer.whatsapp_number || null,
-            phone: order.buyer.phone || null,
-          } : null),
-    });
+    // Collect all counterparty IDs
+    const counterpartyIds = [
+      ...new Set([
+        ...(rawPurchases || []).map((o: any) => o.seller_id),
+        ...(rawSales || []).map((o: any) => o.buyer_id),
+      ].filter(Boolean))
+    ];
+
+    let profileMap: Record<string, any> = {};
+    if (counterpartyIds.length > 0) {
+      const { data: profiles } = await adminClient
+        .from('profiles')
+        .select('user_id, display_name, avatar_url, whatsapp_number, phone')
+        .in('user_id', counterpartyIds);
+
+      profileMap = (profiles || []).reduce((acc: any, p: any) => {
+        acc[p.user_id] = p;
+        return acc;
+      }, {});
+    }
+
+    const mapOrder = (order: any, isPurchase: boolean): EscrowOrderDetails => {
+      const counterpartyProfile = isPurchase ? profileMap[order.seller_id] : profileMap[order.buyer_id];
+
+      return {
+        id: order.id,
+        orderNumber: order.order_number,
+        buyerId: order.buyer_id,
+        sellerId: order.seller_id,
+        listingId: order.listing_id,
+        amount: Number(order.amount),
+        currency: order.currency || 'NGN',
+        status: order.status,
+        paymentMethod: order.payment_method,
+        fundedAt: order.funded_at,
+        shippedAt: order.shipped_at,
+        deliveredAt: order.delivered_at,
+        completedAt: order.completed_at,
+        disputedAt: order.disputed_at,
+        cancelledAt: order.cancelled_at,
+        disputeReason: order.dispute_reason,
+        buyerNotes: order.buyer_notes,
+        sellerNotes: order.seller_notes,
+        createdAt: order.created_at,
+        listing: order.listing || null,
+        counterparty: counterpartyProfile ? {
+          userId: counterpartyProfile.user_id,
+          displayName: counterpartyProfile.display_name || (isPurchase ? 'Seller' : 'Buyer'),
+          avatarUrl: counterpartyProfile.avatar_url || null,
+          whatsappNumber: counterpartyProfile.whatsapp_number || null,
+          phone: counterpartyProfile.phone || null,
+        } : null,
+      };
+    };
 
     return {
       success: true,

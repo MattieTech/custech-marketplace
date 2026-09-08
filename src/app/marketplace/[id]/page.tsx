@@ -32,13 +32,23 @@ async function getListing(id: string) {
     .select(`
       *,
       category:categories(name),
-      seller:profiles!user_id(user_id, display_name, avatar_url, verification_status, trust_level, bank_name, account_number, account_name, whatsapp_number, phone, matric_number, department, created_at, rating_avg),
       listing_images(url)
     `)
     .eq('id', id)
     .maybeSingle();
 
   if (error || !listing) return null;
+
+  if (listing.user_id) {
+    const { data: seller } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url, verification_status, trust_level, bank_name, account_number, account_name, whatsapp_number, phone, matric_number, department, created_at, rating_avg')
+      .eq('user_id', listing.user_id)
+      .maybeSingle();
+
+    listing.seller = seller || null;
+  }
+
   return listing;
 }
 
@@ -49,14 +59,30 @@ async function getSimilarListings(categoryId: string, currentId: string) {
     .from('listings')
     .select(`
       *,
-      seller:profiles!user_id(display_name, verification_status, avatar_url),
       listing_images(url)
     `)
     .eq('category_id', categoryId)
     .eq('status', 'active')
     .neq('id', currentId)
     .limit(4);
-  return data || [];
+
+  if (!data || data.length === 0) return [];
+
+  const userIds = [...new Set(data.map((l: any) => l.user_id).filter(Boolean))];
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('user_id, display_name, verification_status, avatar_url')
+    .in('user_id', userIds);
+
+  const profileMap = (profiles || []).reduce((acc: any, p: any) => {
+    acc[p.user_id] = p;
+    return acc;
+  }, {});
+
+  return data.map((l: any) => ({
+    ...l,
+    seller: profileMap[l.user_id] || null,
+  }));
 }
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {

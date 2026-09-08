@@ -35,8 +35,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
       created_at,
       user_id,
       services(*),
-      images:listing_images(url),
-      seller:profiles!user_id(user_id, display_name, avatar_url, verification_status, created_at, rating_avg, rating_count, phone, whatsapp_number)
+      images:listing_images(url)
     `)
     .eq('id', id)
     .eq('listing_type', 'service')
@@ -46,8 +45,17 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
+  let seller: any = {};
+  if (realListing.user_id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url, verification_status, created_at, rating_avg, rating_count, phone, whatsapp_number')
+      .eq('user_id', realListing.user_id)
+      .maybeSingle();
+    seller = profile || {};
+  }
+
   const s = Array.isArray(realListing.services) ? realListing.services[0] || {} : realListing.services || {};
-  const seller = Array.isArray(realListing.seller) ? realListing.seller[0] || {} : realListing.seller || {};
   const images = (realListing.images || []).map((img: any) => img.url).filter(Boolean);
   const mainImage = images[0] || '';
 
