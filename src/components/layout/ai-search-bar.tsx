@@ -128,12 +128,12 @@ export function AISearchBar({ className = '' }: { className?: string }) {
               setQuery(e.target.value);
               setIsOpen(true);
             }}
-            placeholder="Search products, hostels, services with AI..."
-            className="w-full text-xs bg-slate-100/75 hover:bg-slate-100/95 focus:bg-white border border-slate-200/80 focus:border-emerald-500/80 rounded-full pl-9 pr-24 py-2 focus:outline-none backdrop-blur-md shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] focus:shadow-[0_0_0_3px_rgba(16,185,129,0.14)] transition-all text-slate-900 placeholder:text-slate-400"
+            placeholder="Search campus..."
+            className="w-full text-xs bg-slate-100/75 hover:bg-slate-100/95 focus:bg-white border border-slate-200/80 focus:border-emerald-500/80 rounded-full pl-8 pr-12 py-1.5 focus:outline-none backdrop-blur-md shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] focus:shadow-[0_0_0_3px_rgba(16,185,129,0.14)] transition-all text-slate-900 placeholder:text-slate-400"
           />
 
           {/* Left search icon */}
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 flex items-center pointer-events-none">
+          <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center pointer-events-none">
             {loading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
             ) : (
@@ -151,16 +151,16 @@ export function AISearchBar({ className = '' }: { className?: string }) {
                   setResults([]);
                   setInterpretation('');
                 }}
-                className="w-4 h-4 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition-colors mr-1"
+                className="w-4 h-4 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition-colors mr-0.5"
                 aria-label="Clear search"
               >
                 <X className="w-2.5 h-2.5" />
               </button>
             )}
 
-            <div className="hidden sm:flex items-center gap-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/15 border border-emerald-500/20 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 rounded-full select-none pointer-events-none">
+            <div className="flex items-center gap-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/15 border border-emerald-500/20 text-emerald-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full select-none pointer-events-none">
               <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
-              <span>AI Search</span>
+              <span>AI</span>
             </div>
           </div>
         </div>
@@ -168,7 +168,7 @@ export function AISearchBar({ className = '' }: { className?: string }) {
 
       {/* AI Smart Search Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-2xl border border-slate-200/90 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.1)] p-3 z-50 overflow-hidden select-none animate-in fade-in-50 slide-in-from-top-2 duration-150 max-h-[420px] overflow-y-auto">
+        <div className="absolute right-0 top-full mt-2 w-[320px] sm:w-[380px] bg-white/95 backdrop-blur-2xl border border-slate-200/90 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.1)] p-3 z-50 overflow-hidden select-none animate-in fade-in-50 slide-in-from-top-2 duration-150 max-h-[420px] overflow-y-auto">
           {/* AI Query Interpretation banner */}
           {interpretation && (
             <div className="mb-3 px-3 py-2 bg-emerald-50/80 border border-emerald-200/80 rounded-xl flex items-start gap-2 text-xs text-emerald-900">
@@ -185,7 +185,7 @@ export function AISearchBar({ className = '' }: { className?: string }) {
             <div className="space-y-1.5 mb-2">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-2 mb-1 flex items-center justify-between">
                 <span>Direct Matches ({results.length})</span>
-                <span className="text-[10px] text-emerald-600 font-medium">Gemini 3.6 Flash</span>
+                <span className="text-[10px] text-emerald-600 font-medium">Campus AI</span>
               </div>
 
               {results.map((item) => (

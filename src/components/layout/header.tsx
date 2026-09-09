@@ -528,7 +528,7 @@ export function Header() {
 
           <div className="flex items-center gap-3">
             {/* AI-Powered Search Capsule */}
-            <div className="w-56 lg:w-72">
+            <div className="w-36 lg:w-44 xl:w-52">
               <AISearchBar />
             </div>
 

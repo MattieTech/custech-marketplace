@@ -77,7 +77,7 @@ export function HeroDealsShowcase() {
       title: 'CUSTECH Campus AI Assistant',
       highlight: 'Instant AI Helpdesk',
       description: 'Get live answers on trade safety, student verification, verified lodges, and fake alert defense.',
-      featureBenefit: 'Live Online • Powered by Gemini AI',
+      featureBenefit: 'Live Online • 24/7 Campus AI Support',
       featureIcon: Bot,
       ctaText: 'Chat with AI Assistant',
       ctaHref: '#support',
@@ -204,7 +204,7 @@ export function HeroDealsShowcase() {
   const marqueeItems = [
     'CLEARANCE SALES: UP TO 90% OFF WITH VOUCHER CODE BLACK90',
     'VOUCHER STORE: USE CODE CAMPUS20 FOR 20% DISCOUNT',
-    'AI CUSTOMER SUPPORT: POWERED BY GEMINI FOR INSTANT CAMPUS ANSWERS',
+    'AI CUSTOMER SUPPORT: 24/7 INSTANT CAMPUS ANSWERS & TRADE DEFENSE',
     'WHATSAPP COMMUNITY: JOIN VERIFIED CUSTECH STUDENTS & SELLERS',
     'FREE ITEMS (₦0.00): VERIFIED CAMPUS DONATIONS & GIVEAWAYS',
     'CUSTECH FORCE: BECOME A STUDENT AMBASSADOR & EARN COMMISSIONS',

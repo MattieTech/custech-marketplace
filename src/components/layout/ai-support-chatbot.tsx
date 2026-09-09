@@ -171,8 +171,8 @@ export function AiSupportChatbot() {
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1.5">
                     <h3 className="text-xs sm:text-sm font-bold leading-none">CUSTECH AI Helpdesk</h3>
-                    <span className="bg-emerald-500/25 border border-emerald-400/30 text-emerald-300 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase">
-                      Gemini
+                    <span className="bg-emerald-500/25 border border-emerald-400/30 text-emerald-300 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase">
+                      24/7 Support
                     </span>
                   </div>
                   <p className="text-[11px] text-emerald-200/80 leading-none">

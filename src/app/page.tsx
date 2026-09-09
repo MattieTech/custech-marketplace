@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { 
   Smartphone, Laptop, Zap, Shirt, BookOpen, 
-  House, Gift, Wrench, UtensilsCrossed, Palette,
+  House, Gift, Wrench, UtensilsCrossed, Palette, Headphones,
   UserPlus, ShoppingBag, ShieldCheck, Star, Scale, Flag, Search,
   CheckCircle2, GraduationCap, Users, ArrowRight, Sparkles
 } from 'lucide-react';
@@ -23,6 +23,8 @@ export default function Home() {
     { name: 'Repairs', icon: Wrench, href: '/services?category=repairs', iconColor: 'text-rose-500', subtitle: 'Fixes' },
     { name: 'Food', icon: UtensilsCrossed, href: '/marketplace?category=food', iconColor: 'text-amber-600', subtitle: 'Campus Meals' },
     { name: 'Design', icon: Palette, href: '/services?category=design', iconColor: 'text-purple-600', subtitle: 'Creative' },
+    { name: 'Gadgets', icon: Headphones, href: '/marketplace?category=gadgets', iconColor: 'text-cyan-500', subtitle: 'Accessories' },
+    { name: 'Academics', icon: GraduationCap, href: '/marketplace?category=academics', iconColor: 'text-teal-600', subtitle: 'Materials' },
     { name: 'Deals', icon: Zap, href: '/deals', iconColor: 'text-emerald-500', subtitle: 'Discounts' },
     { name: 'Free Items', icon: Gift, href: '/free-items', iconColor: 'text-indigo-500', subtitle: 'Donations' },
   ];
@@ -155,12 +157,12 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
             {categories.map((category) => (
               <Link
                 key={category.name}
                 href={category.href}
-                className="group flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-md transition-all duration-200 text-center"
+                className="group flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-md transition-all duration-200 text-center"
               >
                 <div className="w-8 h-8 flex items-center justify-center mb-1.5">
                   <category.icon className={cn("w-6 h-6 stroke-[1.8] transition-transform duration-200 group-hover:scale-110", category.iconColor)} />
