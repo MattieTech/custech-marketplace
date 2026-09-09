@@ -1,48 +1,81 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { loginSchema } from '@/lib/validations/auth'
 import { toast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { Loader2, MailCheck, AlertCircle } from 'lucide-react'
+import { resendConfirmationEmailAction } from '../register/actions'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+  
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
+  
+  // Show message if redirected from callback failure
+  const callbackError = searchParams.get('error')
   
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
+    setUnconfirmedEmail(null)
     setLoading(true)
     
     const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
+    const email = (formData.get('email') as string)?.trim().toLowerCase()
     const password = formData.get('password') as string
     
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
       
-      if (authError) throw new Error(authError.message)
+      if (authError) {
+        if (authError.message.toLowerCase().includes('email not confirmed') || 
+            authError.message.toLowerCase().includes('not confirmed')) {
+          setUnconfirmedEmail(email)
+          throw new Error('Please confirm your email address before signing in. Check your email for the confirmation link sent via Resend.')
+        }
+        throw new Error(authError.message)
+      }
       
-      toast.success('Signed in successfully! Welcome back.')
-      router.push('/dashboard')
-      router.refresh()
+      toast.success('Signed in successfully! Redirecting to dashboard...')
+      
+      // Immediate direct redirect to dashboard
+      const nextDestination = searchParams.get('redirect') || searchParams.get('next') || '/dashboard'
+      window.location.assign(nextDestination)
     } catch (err: any) {
       const msg = err.message || 'Invalid email or password.'
       setError(msg)
       toast.error(msg)
-    } finally {
       setLoading(false)
+    }
+  }
+
+  const handleResend = async () => {
+    if (!unconfirmedEmail) return
+    setResending(true)
+    try {
+      const res = await resendConfirmationEmailAction(unconfirmedEmail)
+      if (res.success) {
+        toast.success('Confirmation email resent via Resend! Please check your inbox.')
+      } else {
+        toast.error(res.error || 'Failed to resend confirmation email.')
+      }
+    } catch {
+      toast.error('Unable to resend email right now. Please try again.')
+    } finally {
+      setResending(false)
     }
   }
 
@@ -56,12 +89,42 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6">
+        {callbackError && (
+          <div className="mb-4 p-3.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+            <span>Verification link has expired or was invalid. You can request a fresh confirmation link below.</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 p-3.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl font-medium space-y-2">
+            <p>{error}</p>
+            {unconfirmedEmail && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResend}
+                disabled={resending}
+                className="w-full text-xs font-bold text-emerald-700 border-emerald-300 hover:bg-emerald-50 mt-1"
+              >
+                {resending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    Resending via Resend...
+                  </>
+                ) : (
+                  <>
+                    <MailCheck className="w-3.5 h-3.5 mr-1.5" />
+                    Resend Confirmation Email via Resend
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        )}
+
         <form onSubmit={onSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl font-medium">
-              {error}
-            </div>
-          )}
           <div className="space-y-1.5">
             <label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase tracking-wider">Email Address</label>
             <Input 
@@ -97,7 +160,7 @@ export default function LoginPage() {
             disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign In to CUSTECH
+            {loading ? 'Signing in & Redirecting...' : 'Sign In to CUSTECH'}
           </Button>
         </form>
       </CardContent>
@@ -110,5 +173,17 @@ export default function LoginPage() {
         </p>
       </CardFooter>
     </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-8 text-center text-slate-500">
+        <Loader2 className="w-6 h-6 animate-spin mx-auto text-emerald-600" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle2, XCircle, AtSign, ShieldCheck, Sparkles, User, Mail, Lock, Gift } from 'lucide-react';
 import { toast } from '@/components/ui/toast';
-import { linkNewUserReferral } from './actions';
+import { registerUserAction, resendConfirmationEmailAction } from './actions';
 
 function RegisterForm() {
   const router = useRouter();
@@ -17,6 +17,7 @@ function RegisterForm() {
   const supabase = createClient();
 
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -153,33 +154,19 @@ function RegisterForm() {
     setLoading(true);
 
     try {
-      const { data, error: authError } = await supabase.auth.signUp({
+      const res = await registerUserAction({
+        displayName: displayName.trim(),
+        username: cleanUsername,
         email: email.trim(),
         password,
-        options: {
-          data: {
-            full_name: displayName.trim(),
-            display_name: displayName.trim(),
-            username: cleanUsername,
-            referral_code: cleanUsername,
-            referrer: referralCode.trim() || null
-          }
-        }
+        referralCode: referralCode.trim() || undefined,
       });
 
-      if (authError) throw new Error(authError.message);
-
-      if (data.user) {
-        // Link referral & ensure profile username is persisted immediately
-        await linkNewUserReferral({
-          userId: data.user.id,
-          username: cleanUsername,
-          displayName: displayName.trim(),
-          referrerCode: referralCode.trim() || undefined
-        });
+      if (!res.success) {
+        throw new Error(res.error || 'Registration failed.');
       }
 
-      toast.success('Account created! Please check your email inbox to verify your account.', 'Registration Successful');
+      toast.success('Account created! Verification email sent via Resend.');
       setSuccess(true);
     } catch (err: any) {
       const msg = err.message || 'An error occurred during registration.';
@@ -187,6 +174,22 @@ function RegisterForm() {
       toast.error(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      const res = await resendConfirmationEmailAction(email.trim());
+      if (res.success) {
+        toast.success('Confirmation email resent via Resend! Please check your inbox & spam folder.');
+      } else {
+        toast.error(res.error || 'Failed to resend email.');
+      }
+    } catch {
+      toast.error('Could not resend email right now. Please try again.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -200,20 +203,41 @@ function RegisterForm() {
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">Check Your Email</CardTitle>
           <CardDescription className="text-slate-500">
-            We've sent a verification link to <strong className="text-slate-800">{email}</strong>
+            Confirmation email sent to <strong className="text-slate-800">{email}</strong>
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center p-6 space-y-4 text-center">
           <p className="text-sm text-slate-600 max-w-sm">
-            Click the link in your email to activate your CUSTECH Marketplace account and your unique profile <span className="font-mono font-semibold text-emerald-600">@{username.toLowerCase()}</span>.
+            We sent a verification link to your email via <strong>Resend</strong>. Click the button in your email to confirm your account and you will be redirected to your dashboard immediately.
           </p>
-          <Button 
-            variant="outline" 
-            onClick={() => router.push('/login')} 
-            className="w-full mt-4 rounded-xl border-slate-200 hover:bg-slate-50 font-semibold text-slate-700"
-          >
-            Proceed to Sign In
-          </Button>
+
+          <div className="w-full pt-2 space-y-2.5">
+            <Button 
+              variant="outline" 
+              onClick={handleResend}
+              disabled={resending}
+              className="w-full rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-semibold"
+            >
+              {resending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin text-emerald-600" />
+                  Resending Confirmation Email...
+                </>
+              ) : (
+                'Resend Confirmation Email'
+              )}
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                window.location.assign('/login');
+              }} 
+              className="w-full rounded-xl text-slate-600 hover:bg-slate-100 font-semibold text-xs"
+            >
+              Proceed to Sign In
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
