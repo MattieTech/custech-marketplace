@@ -145,5 +145,31 @@ export const PRESET_EMAIL_CAMPAIGNS: CampaignTemplate[] = [
     ctaUrl: '/marketplace',
     secondaryCtaText: 'Check Free Items Section (₦0)',
     secondaryCtaUrl: '/free-items'
+  },
+  {
+    id: 'verify_and_refer',
+    name: '🎓 "Verify ID & Refer & Earn" (Student Onboarding Follow-Up)',
+    description: 'Encourages students to upload their student ID for the Green Badge and share their referral link to earn rewards.',
+    tag: 'Verification & Referrals',
+    tone: 'seller_cashout',
+    subject: 'Claim your Green Verified Badge + Earn cash with your referral link 🎓💰',
+    previewText: 'Unlock unlimited marketplace listings and earn campus rewards when your course mates join.',
+    badge: '🛡️ STUDENT BADGE & REWARDS',
+    headline: 'Level Up Your Account & Earn While in School!',
+    bodyParagraphs: [
+      'Welcome to CUSTECH Marketplace! If you have not completed your Student ID verification, you are missing out on the best perks on campus.',
+      '1. Get Your Green Verified Badge: Buyers trust verified sellers 5x more. It takes only 60 seconds to upload your student ID card or portal screenshot.',
+      '2. Refer Course Mates & Earn: You have a personal referral link. Share it with friends, course mates, and lodge WhatsApp groups. Whenever they join and trade, you earn cash rewards straight into your wallet!'
+    ],
+    bulletPoints: [
+      '🛡️ Green Verified Badge unlocks unlimited selling & trust',
+      '💸 Instant referral earnings when course mates register with your code',
+      '🤝 Direct bank, OPay or PalmPay cash out anytime',
+      '🚀 Boost your listings to the homepage featured section'
+    ],
+    ctaText: 'Verify Your Student ID in 60s →',
+    ctaUrl: '/dashboard/verification',
+    secondaryCtaText: 'View My Referral Link & Wallet',
+    secondaryCtaUrl: '/dashboard/referrals'
   }
 ];

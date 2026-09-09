@@ -125,6 +125,7 @@ export function BroadcastHub({ initialStats, adminEmail }: BroadcastHubProps) {
 
   const audienceTargetCount = 
     audience === 'verified' ? stats.verifiedUsers :
+    audience === 'unverified' ? stats.unverifiedUsers :
     audience === 'sellers' ? stats.sellersCount : stats.totalUsers;
 
   return (
@@ -163,6 +164,16 @@ export function BroadcastHub({ initialStats, adminEmail }: BroadcastHubProps) {
             <div>
               <div className="text-[11px] font-bold uppercase text-slate-400">Verified</div>
               <div className="text-base font-black text-slate-900">{stats.verifiedUsers}</div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-2xl px-4 py-2 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[11px] font-bold uppercase text-slate-400">Unverified</div>
+              <div className="text-base font-black text-slate-900">{stats.unverifiedUsers}</div>
             </div>
           </div>
 
@@ -393,33 +404,44 @@ export function BroadcastHub({ initialStats, adminEmail }: BroadcastHubProps) {
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Select Recipient Audience
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => setAudience('all')}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                    className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
                       audience === 'all' 
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    All Users ({stats.totalUsers})
+                    All ({stats.totalUsers})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAudience('unverified')}
+                    className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
+                      audience === 'unverified' 
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    Unverified ({stats.unverifiedUsers})
                   </button>
                   <button
                     type="button"
                     onClick={() => setAudience('verified')}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                    className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
                       audience === 'verified' 
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    Verified Only ({stats.verifiedUsers})
+                    Verified ({stats.verifiedUsers})
                   </button>
                   <button
                     type="button"
                     onClick={() => setAudience('sellers')}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                    className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
                       audience === 'sellers' 
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'

@@ -5,11 +5,12 @@ import { checkAdminAccess, logAdminAction } from '@/lib/admin';
 import { sendPromotionalEmail, sendBatchPromotionalBroadcast } from '@/lib/resend';
 import { CampaignTemplate } from '@/lib/email-templates';
 
-export type TargetAudience = 'all' | 'verified' | 'sellers';
+export type TargetAudience = 'all' | 'verified' | 'unverified' | 'sellers';
 
 export interface BroadcastStats {
   totalUsers: number;
   verifiedUsers: number;
+  unverifiedUsers: number;
   sellersCount: number;
 }
 
@@ -36,9 +37,13 @@ export async function getBroadcastStatsAction(): Promise<BroadcastStats> {
     .from('listings')
     .select('user_id', { count: 'exact', head: true });
 
+  const total = totalUsers || 0;
+  const verified = verifiedUsers || 0;
+
   return {
-    totalUsers: totalUsers || 0,
-    verifiedUsers: verifiedUsers || 0,
+    totalUsers: total,
+    verifiedUsers: verified,
+    unverifiedUsers: Math.max(0, total - verified),
     sellersCount: sellersCount || 0,
   };
 }
@@ -112,6 +117,8 @@ export async function sendLiveBroadcastAction({
 
   if (audience === 'verified') {
     query = query.eq('verification_status', 'approved');
+  } else if (audience === 'unverified') {
+    query = query.neq('verification_status', 'approved');
   }
 
   const { data: profiles, error: profileErr } = await query;

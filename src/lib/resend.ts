@@ -573,3 +573,277 @@ export async function sendBatchPromotionalBroadcast({
     errors,
   };
 }
+
+// =========================================================================
+// ONBOARDING FOLLOW-UP: VERIFICATION & REFER-AND-EARN
+// =========================================================================
+
+export interface WelcomeReferralFollowupParams {
+  to: string;
+  displayName?: string;
+  username?: string;
+  referralCode?: string;
+}
+
+/**
+ * Sends an automated follow-up email after account confirmation encouraging
+ * student ID verification and sharing their unique referral link to earn rewards.
+ */
+export async function sendWelcomeAndReferralFollowupEmail({
+  to,
+  displayName,
+  username,
+  referralCode,
+}: WelcomeReferralFollowupParams) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://custech.market';
+  const cleanCode = referralCode || username || 'student';
+  const referralLink = `${siteUrl}/register?ref=${cleanCode}`;
+  const verificationUrl = `${siteUrl}/dashboard/verification`;
+  const referralsDashboardUrl = `${siteUrl}/dashboard/referrals`;
+  const subject = `Welcome to CUSTECH Marketplace! Claim your verified badge & earn with your referral link 🎓💰`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to CUSTECH Marketplace</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f1f5f9;
+      margin: 0;
+      padding: 0;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #f1f5f9;
+      padding: 30px 12px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.06);
+    }
+    .header {
+      background: linear-gradient(135deg, #059669 0%, #064e3b 100%);
+      padding: 36px 32px;
+      text-align: center;
+      color: #ffffff;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.25);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: #a7f3d0;
+      padding: 5px 14px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+    }
+    .header-sub {
+      margin: 6px 0 0 0;
+      font-size: 13px;
+      color: #d1fae5;
+      font-weight: 500;
+    }
+    .content {
+      padding: 36px 32px;
+    }
+    .greeting {
+      font-size: 18px;
+      font-weight: 800;
+      color: #047857;
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+    .intro {
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: #334155;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    .card-text {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #475569;
+      margin: 0 0 14px 0;
+    }
+    .referral-box {
+      background: #ecfdf5;
+      border: 1px dashed #34d399;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 12px 0;
+      text-align: center;
+    }
+    .referral-link {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: #065f46;
+      word-break: break-all;
+    }
+    .btn {
+      display: inline-block;
+      background: #059669;
+      color: #ffffff !important;
+      font-size: 13.5px;
+      font-weight: 800;
+      text-decoration: none;
+      padding: 11px 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+    }
+    .btn-secondary {
+      background: #0284c7;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+    }
+    .safety-tip {
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-top: 24px;
+      font-size: 12px;
+      color: #92400e;
+      line-height: 1.45;
+    }
+    .footer {
+      background-color: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 24px 32px;
+      font-size: 11px;
+      color: #94a3b8;
+      text-align: center;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="header">
+        <span class="badge">Next Steps for Success</span>
+        <h1>Welcome to CUSTECH Marketplace!</h1>
+        <p class="header-sub">Official Campus Hub for Confluence University</p>
+      </div>
+
+      <div class="content">
+        <div class="greeting">Hey ${displayName || 'Campus Scholar'} (@${username || 'student'}) 👋,</div>
+        
+        <p class="intro">
+          Your account is confirmed and ready to go! Here are the <strong>2 most important things</strong> you should do right now to make the most of CUSTECH Marketplace:
+        </p>
+
+        <!-- Step 1: Verification -->
+        <div class="card" style="border-left: 4px solid #059669;">
+          <h3 class="card-title">
+            <span>🛡️ 1. Get Your Green Verified Student Badge</span>
+          </h3>
+          <p class="card-text">
+            Buyers and sellers on campus only want to deal with verified students. Getting your Green Badge unlocks unlimited marketplace listings, hostel rooms, and freelance services, and makes your profile 5x more trusted.
+          </p>
+          <a href="${verificationUrl}" class="btn" target="_blank">
+            Verify Your Student ID in 60 Secs →
+          </a>
+        </div>
+
+        <!-- Step 2: Refer and Earn -->
+        <div class="card" style="border-left: 4px solid #0284c7;">
+          <h3 class="card-title">
+            <span>💸 2. Refer Course Mates & Earn Cash</span>
+          </h3>
+          <p class="card-text">
+            Did you know you have a personal referral link? Share it in your department, faculty, or lodge WhatsApp groups. Whenever a friend joins and verifies, you earn rewards directly to your campus wallet!
+          </p>
+          <div class="referral-box">
+            <div style="font-size: 11px; text-transform: uppercase; color: #047857; font-weight: 700; margin-bottom: 4px;">Your Personal Invite Link:</div>
+            <div class="referral-link">${referralLink}</div>
+          </div>
+          <a href="${referralsDashboardUrl}" class="btn btn-secondary" target="_blank">
+            Open Referrals Dashboard & Track Earnings →
+          </a>
+        </div>
+
+        <!-- Step 3: Explore -->
+        <div style="text-align: center; margin-top: 24px;">
+          <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">
+            Looking for something on campus right now?
+          </p>
+          <a href="${siteUrl}/marketplace" style="font-weight: 700; color: #059669; text-decoration: underline; font-size: 13.5px;" target="_blank">
+            Explore Campus Listings, Hostels & Services →
+          </a>
+        </div>
+
+        <div class="safety-tip">
+          🛡️ <strong>Campus Safety Rule:</strong> Always inspect items and lodge keys in daylight public campus safe zones before making direct transfers.
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          This email was sent to ${to} because you are registered on CUSTECH Marketplace.<br>
+          Confluence University of Science and Technology (CUSTECH), Osara, Kogi State, Nigeria.
+        </p>
+        <p>© ${new Date().getFullYear()} CUSTECH Marketplace. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  if (resend) {
+    try {
+      const response = await resend.emails.send({
+        from: DEFAULT_FROM_EMAIL,
+        to: [to],
+        subject,
+        html: htmlContent,
+      });
+      return { success: !response.error, id: response.data?.id, error: response.error?.message };
+    } catch (err: any) {
+      console.error('[Welcome/Referral Email Error]:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  console.log(`[Resend Mock Onboarding] Sent welcome & referral follow-up to ${to} with link: ${referralLink}`);
+  return { success: true, mock: true };
+}
+

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { EmailOtpType } from '@supabase/supabase-js'
+import { sendWelcomeAndReferralFollowupEmail } from '@/lib/resend'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -40,6 +41,21 @@ export async function GET(request: Request) {
     })
 
     if (!error) {
+      // Send automated Welcome, ID Verification & Refer-and-Earn follow-up in background
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user?.email) {
+          sendWelcomeAndReferralFollowupEmail({
+            to: user.email,
+            displayName: user.user_metadata?.display_name || user.user_metadata?.full_name || 'Student',
+            username: user.user_metadata?.username || 'student',
+            referralCode: user.user_metadata?.referral_code || user.user_metadata?.username,
+          }).catch(e => console.error('[Followup Email Error]:', e))
+        }
+      } catch (err) {
+        console.error('[User Fetch Error in Callback]:', err)
+      }
+
       // Successfully confirmed email & established session -> redirect to dashboard immediately
       return NextResponse.redirect(`${origin}${next}`)
     }
