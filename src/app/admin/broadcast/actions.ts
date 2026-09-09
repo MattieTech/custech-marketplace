@@ -107,13 +107,32 @@ export async function sendLiveBroadcastAction({
   const { user } = await checkAdminAccess(['super_admin', 'moderator']);
   const adminClient = await createAdminClient();
 
-  // Fetch recipients based on selected audience
-  let recipients: Array<{ email: string; displayName?: string }> = [];
+  // 1. Fetch all registered users from auth.users (source of truth for email)
+  const { data: authData, error: authErr } = await adminClient.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
 
-  // Query profiles
+  if (authErr) {
+    return { success: false, error: authErr.message };
+  }
+
+  const authUserMap = new Map<string, { email: string; displayName: string }>();
+  if (authData?.users) {
+    for (const u of authData.users) {
+      if (u.email) {
+        authUserMap.set(u.id, {
+          email: u.email.toLowerCase().trim(),
+          displayName: u.user_metadata?.display_name || u.user_metadata?.full_name || 'Student',
+        });
+      }
+    }
+  }
+
+  // 2. Query profiles without querying non-existent email column
   let query = adminClient
     .from('profiles')
-    .select('user_id, display_name, email, verification_status');
+    .select('user_id, display_name, verification_status');
 
   if (audience === 'verified') {
     query = query.eq('verification_status', 'approved');
@@ -127,25 +146,7 @@ export async function sendLiveBroadcastAction({
     return { success: false, error: profileErr.message };
   }
 
-  // Also query auth.users so no user with an email is left out
-  const { data: authData } = await adminClient.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
-
-  const authUserMap = new Map<string, { email: string; displayName?: string }>();
-  if (authData?.users) {
-    for (const u of authData.users) {
-      if (u.email) {
-        authUserMap.set(u.id, {
-          email: u.email,
-          displayName: u.user_metadata?.display_name || u.user_metadata?.full_name || 'Student',
-        });
-      }
-    }
-  }
-
-  // If audience is sellers, filter by users who have listings
+  // 3. If audience is sellers, filter by users who have listings
   let sellerUserIds = new Set<string>();
   if (audience === 'sellers') {
     const { data: listings } = await adminClient.from('listings').select('user_id');
@@ -154,34 +155,40 @@ export async function sendLiveBroadcastAction({
     }
   }
 
-  // Build unique recipient list
+  // 4. Build unique recipient list
   const seenEmails = new Set<string>();
+  let recipients: Array<{ email: string; displayName?: string }> = [];
 
-  if (profiles) {
-    for (const p of profiles) {
-      if (audience === 'sellers' && !sellerUserIds.has(p.user_id)) {
-        continue;
-      }
-
-      const email = p.email || authUserMap.get(p.user_id)?.email;
-      if (email && !seenEmails.has(email.toLowerCase())) {
-        seenEmails.add(email.toLowerCase());
+  if (audience === 'all') {
+    const profileMap = new Map((profiles || []).map((p) => [p.user_id, p.display_name]));
+    for (const [userId, authInfo] of authUserMap.entries()) {
+      if (!seenEmails.has(authInfo.email)) {
+        seenEmails.add(authInfo.email);
         recipients.push({
-          email: email.toLowerCase(),
-          displayName: p.display_name || authUserMap.get(p.user_id)?.displayName || 'Student',
+          email: authInfo.email,
+          displayName: profileMap.get(userId) || authInfo.displayName,
         });
       }
     }
-  }
-
-  // Fallback: If profile list was empty or missing emails, use auth users
-  if (recipients.length === 0 && authData?.users) {
-    for (const u of authData.users) {
-      if (u.email && !seenEmails.has(u.email.toLowerCase())) {
-        seenEmails.add(u.email.toLowerCase());
+  } else if (audience === 'verified' || audience === 'unverified') {
+    for (const p of profiles || []) {
+      const authInfo = authUserMap.get(p.user_id);
+      if (authInfo && !seenEmails.has(authInfo.email)) {
+        seenEmails.add(authInfo.email);
         recipients.push({
-          email: u.email.toLowerCase(),
-          displayName: u.user_metadata?.display_name || 'Student',
+          email: authInfo.email,
+          displayName: p.display_name || authInfo.displayName,
+        });
+      }
+    }
+  } else if (audience === 'sellers') {
+    for (const sellerId of sellerUserIds) {
+      const authInfo = authUserMap.get(sellerId);
+      if (authInfo && !seenEmails.has(authInfo.email)) {
+        seenEmails.add(authInfo.email);
+        recipients.push({
+          email: authInfo.email,
+          displayName: authInfo.displayName,
         });
       }
     }

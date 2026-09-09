@@ -17,22 +17,29 @@ export async function GET(request: Request) {
 
     const adminClient = await createAdminClient();
 
-    // Query active registered students with valid emails
-    const { data: profiles, error: profileErr } = await adminClient
-      .from('profiles')
-      .select('email, display_name')
-      .not('email', 'is', null);
+    // Query active registered students from auth.users
+    const { data: authData, error: authErr } = await adminClient.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
 
-    if (profileErr) {
-      return NextResponse.json({ error: profileErr.message }, { status: 500 });
+    if (authErr) {
+      return NextResponse.json({ error: authErr.message }, { status: 500 });
     }
 
+    // Query profiles for display names
+    const { data: profiles } = await adminClient
+      .from('profiles')
+      .select('user_id, display_name');
+
+    const profileMap = new Map((profiles || []).map((p) => [p.user_id, p.display_name]));
+
     // Build recipient list
-    const recipients = (profiles || [])
-      .filter((p) => p.email && p.email.includes('@'))
-      .map((p) => ({
-        email: p.email.toLowerCase().trim(),
-        displayName: p.display_name || 'Student',
+    const recipients = (authData?.users || [])
+      .filter((u) => u.email && u.email.includes('@'))
+      .map((u) => ({
+        email: u.email!.toLowerCase().trim(),
+        displayName: profileMap.get(u.id) || u.user_metadata?.display_name || u.user_metadata?.full_name || 'Student',
       }));
 
     if (recipients.length === 0) {
