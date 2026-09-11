@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { AdminRolesManager } from '@/components/admin/admin-roles-manager';
+import { OnboardAdminDialog } from '@/components/admin/onboard-admin-dialog';
 
 export default async function AdminRolesPage() {
   const { user } = await checkAdminAccess(['super_admin']);
@@ -65,7 +66,9 @@ export default async function AdminRolesPage() {
             Manage platform team permissions, assign delegated duties, and audit administrative privileges.
           </p>
         </div>
+        <OnboardAdminDialog />
       </div>
+
 
       {/* Role Breakdown Reference Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">

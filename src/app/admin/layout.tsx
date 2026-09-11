@@ -28,7 +28,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, roles: ['super_admin', 'moderator', 'finance_admin', 'verification_officer', 'support_agent'] },
   { name: 'Users', href: '/admin/users', icon: Users, roles: ['super_admin', 'moderator', 'finance_admin', 'verification_officer', 'support_agent'] },
-  { name: 'Admin Roles', href: '/admin/roles', icon: UserCheck, roles: ['super_admin'] },
+  { name: 'Admin Onboarding', href: '/admin/roles', icon: UserCheck, roles: ['super_admin'] },
   { name: 'Email Broadcasts', href: '/admin/broadcast', icon: Megaphone, roles: ['super_admin', 'moderator'] },
   { name: 'Listings', href: '/admin/listings', icon: ShoppingBag, roles: ['super_admin', 'moderator'] },
   { name: 'Orders & Escrow', href: '/admin/orders', icon: Package, roles: ['super_admin', 'finance_admin', 'support_agent'] },

@@ -1,10 +1,12 @@
 import { checkAdminAccess } from '@/lib/admin';
 import { createAdminClient } from '@/lib/supabase/server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, ShieldCheck, ShoppingBag, Flag, Scale, Activity } from 'lucide-react';
+import { Users, ShieldCheck, ShoppingBag, Flag, Scale, Activity, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
+import { OnboardAdminDialog } from '@/components/admin/onboard-admin-dialog';
+
 
 export default async function AdminDashboard() {
   await checkAdminAccess();
@@ -70,7 +72,8 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <OnboardAdminDialog />
           <div className="bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-2.5 text-center">
             <p className="text-xs font-semibold text-slate-500 uppercase">System Status</p>
             <p className="text-sm font-bold text-emerald-600 flex items-center gap-1 justify-center mt-0.5">
@@ -84,6 +87,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
       </div>
+
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => {

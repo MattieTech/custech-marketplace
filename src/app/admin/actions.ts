@@ -650,6 +650,247 @@ export async function revokeAdminRole(targetUserId: string) {
   return { success: true };
 }
 
+export interface OnboardAdminInput {
+  email: string;
+  fullName: string;
+  password?: string;
+  role: string;
+  department?: string;
+  phoneNumber?: string;
+}
+
+/**
+ * Requirement: Onboard new administrators directly from the Admin Dashboard
+ * Creates pre-verified accounts with chosen RBAC role, or promotes existing users.
+ */
+export async function onboardNewAdmin(input: OnboardAdminInput) {
+  const { user } = await checkAdminAccess(['super_admin']);
+  const adminClient = await createAdminClient();
+
+  const email = (input.email || '').trim().toLowerCase();
+  const fullName = (input.fullName || '').trim();
+  const role = input.role || 'moderator';
+  const password = input.password?.trim() || `Admin_${Math.random().toString(36).slice(-6)}!${Date.now().toString().slice(-3)}`;
+
+  if (!email || !email.includes('@')) {
+    return { success: false, error: 'A valid email address is required.' };
+  }
+
+  if (!fullName || fullName.length < 2) {
+    return { success: false, error: 'Full legal or staff name is required.' };
+  }
+
+  const validRoles = ['super_admin', 'moderator', 'finance_admin', 'verification_officer', 'support_agent'];
+  if (!validRoles.includes(role)) {
+    return { success: false, error: 'Invalid administrative role selected.' };
+  }
+
+  try {
+    // 1. Check if user already exists in auth.users
+    const { data: listData } = await adminClient.auth.admin.listUsers();
+    const existingUser = (listData?.users || []).find(
+      u => (u.email || '').toLowerCase() === email
+    );
+
+    let targetUserId: string;
+    let isNewUser = false;
+
+    if (existingUser) {
+      targetUserId = existingUser.id;
+    } else {
+      // 2. Create brand new user in auth.users
+      const { data: newUserData, error: createErr } = await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fullName,
+          display_name: fullName
+        }
+      });
+
+      if (createErr || !newUserData?.user) {
+        console.error('createUser error in onboardNewAdmin:', createErr);
+        return { 
+          success: false, 
+          error: createErr?.message || 'Failed to create new administrator user account.' 
+        };
+      }
+
+      targetUserId = newUserData.user.id;
+      isNewUser = true;
+    }
+
+    // 3. Upsert admin profile (approved, verified, with full name)
+    const { error: profileErr } = await adminClient
+      .from('profiles')
+      .upsert({
+        user_id: targetUserId,
+        display_name: fullName,
+        phone: input.phoneNumber?.trim() || null,
+        department: input.department?.trim() || null,
+        verification_status: 'approved',
+        trust_level: 'custech_verified',
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+
+    if (profileErr) {
+      console.warn('Profile upsert notice:', profileErr.message);
+    }
+
+    // 4. Assign role in admin_roles table
+    const { error: roleErr } = await adminClient
+      .from('admin_roles')
+      .upsert({
+        user_id: targetUserId,
+        role,
+        assigned_by: user.id
+      }, { onConflict: 'user_id' });
+
+    if (roleErr) {
+      await adminClient
+        .from('admin_roles')
+        .upsert({
+          user_id: targetUserId,
+          role,
+          assigned_by: user.id
+        }, { onConflict: 'user_id,role' });
+    }
+
+    // 5. Ensure wallet is created
+    await adminClient
+      .from('wallets')
+      .upsert({
+        user_id: targetUserId,
+        balance: 0,
+        locked_balance: 0,
+        currency: 'NGN'
+      }, { onConflict: 'user_id' });
+
+    // 6. Record verification request as approved & fee waived
+    await adminClient
+      .from('verification_requests')
+      .insert({
+        user_id: targetUserId,
+        verification_method: 'manual',
+        full_name: fullName,
+        phone: input.phoneNumber || 'Admin Account',
+        payment_status: 'success',
+        payment_amount: 0,
+        payment_reference: `ONBOARDED-ADMIN-${Date.now()}`,
+        verification_status: 'approved',
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
+        student_info: { role, onboarded_by: user.id, fee_waived: true }
+      });
+
+    // 7. Send in-app notification to new admin
+    await adminClient.from('notifications').insert({
+      user_id: targetUserId,
+      type: 'role_granted',
+      title: 'Welcome to CUSTECH Administration Team',
+      body: `You have been onboarded as a ${role.replace('_', ' ')}. You have immediate administrative access to the campus marketplace.`
+    });
+
+    await logAdminAction(user.id, 'onboard_admin', 'user', targetUserId, {
+      email,
+      fullName,
+      role,
+      isNewUser
+    });
+
+    revalidatePath('/admin');
+    revalidatePath('/admin/roles');
+    revalidatePath('/admin/users');
+    revalidatePath(`/admin/users/${targetUserId}`);
+
+    return {
+      success: true,
+      isNewUser,
+      userId: targetUserId,
+      email,
+      password: isNewUser ? password : null,
+      role,
+      message: isNewUser
+        ? `Administrator account for ${fullName} (${email}) created and authorized successfully!`
+        : `Existing account (${email}) successfully elevated to ${role.replace('_', ' ')}!`
+    };
+  } catch (error: any) {
+    console.error('onboardNewAdmin caught error:', error);
+    return { success: false, error: error.message || 'An unexpected error occurred during admin onboarding.' };
+  }
+}
+
+/**
+ * Search registered campus users by email, name or matric number to promote them
+ */
+export async function searchPotentialAdmins(query: string) {
+  await checkAdminAccess(['super_admin']);
+  const adminClient = await createAdminClient();
+
+  const q = (query || '').trim();
+  if (q.length < 2) return [];
+
+  // 1. Search profiles
+  const { data: profiles } = await adminClient
+    .from('profiles')
+    .select('user_id, display_name, avatar_url, department, matric_number, verification_status')
+    .or(`display_name.ilike.%${q}%,matric_number.ilike.%${q}%,referral_code.ilike.%${q}%`)
+    .limit(10);
+
+  // 2. Search auth users for email match
+  const { data: authData } = await adminClient.auth.admin.listUsers();
+  const matchingAuthUsers = (authData?.users || []).filter(
+    u => (u.email || '').toLowerCase().includes(q.toLowerCase())
+  ).slice(0, 10);
+
+  // Combine and deduplicate
+  const userMap = new Map<string, any>();
+
+  for (const u of matchingAuthUsers) {
+    userMap.set(u.id, {
+      userId: u.id,
+      email: u.email,
+      displayName: u.user_metadata?.full_name || u.email?.split('@')[0] || 'User',
+      department: null,
+      matricNumber: null,
+      verificationStatus: 'unverified'
+    });
+  }
+
+  if (profiles) {
+    for (const p of profiles) {
+      const existing = userMap.get(p.user_id) || {};
+      const authU = (authData?.users || []).find(u => u.id === p.user_id);
+      userMap.set(p.user_id, {
+        ...existing,
+        userId: p.user_id,
+        email: authU?.email || existing.email || 'Registered User',
+        displayName: p.display_name || existing.displayName,
+        department: p.department,
+        matricNumber: p.matric_number,
+        verificationStatus: p.verification_status
+      });
+    }
+  }
+
+  const userIds = Array.from(userMap.keys());
+  if (userIds.length > 0) {
+    const { data: existingRoles } = await adminClient
+      .from('admin_roles')
+      .select('user_id, role')
+      .in('user_id', userIds);
+
+    const rolesMap = new Map((existingRoles || []).map(r => [r.user_id, r.role]));
+    for (const [id, userObj] of userMap.entries()) {
+      userObj.existingRole = rolesMap.get(id) || null;
+    }
+  }
+
+  return Array.from(userMap.values());
+}
+
+
 // ==========================================
 // 7. ADMIN ESCROW ORDER RESOLUTION
 // ==========================================
