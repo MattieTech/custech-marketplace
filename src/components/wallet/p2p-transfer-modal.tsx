@@ -82,7 +82,9 @@ export function P2PTransferModal({
       return;
     }
 
-    if (numAmount > senderBalance) {
+    const numAmountKobo = Math.round(numAmount * 100);
+
+    if (numAmountKobo > senderBalance) {
       setTransferError(`Insufficient balance. Your available balance is ${formatPrice(senderBalance)}.`);
       return;
     }
@@ -94,7 +96,7 @@ export function P2PTransferModal({
     setIsSubmitting(false);
 
     if (res.success) {
-      toast.success(`Successfully sent ${formatPrice(numAmount)} to ${recipient.displayName}!`, 'Transfer Completed');
+      toast.success(`Successfully sent ${formatPrice(numAmountKobo)} to ${recipient.displayName}!`, 'Transfer Completed');
       onClose();
       handleResetRecipient();
       onTransferSuccess();
@@ -253,7 +255,7 @@ export function P2PTransferModal({
               <Button
                 type="button"
                 onClick={handleTransfer}
-                disabled={isSubmitting || !amount || parseFloat(amount) <= 0 || parseFloat(amount) > senderBalance}
+                disabled={isSubmitting || !amount || parseFloat(amount) <= 0 || (parseFloat(amount) * 100) > senderBalance}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold py-2.5"
               >
                 {isSubmitting ? (
@@ -263,7 +265,7 @@ export function P2PTransferModal({
                   </>
                 ) : (
                   <>
-                    <span>Send {amount ? formatPrice(parseFloat(amount)) : 'Money'} Now</span>
+                    <span>Send {amount ? formatPrice(parseFloat(amount) * 100) : 'Money'} Now</span>
                     <Send className="w-4 h-4 ml-1.5" />
                   </>
                 )}

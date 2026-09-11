@@ -4,6 +4,12 @@ import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { checkAdminAccess, logAdminAction } from '@/lib/admin';
 import { revalidatePath } from 'next/cache';
 
+const RESERVED_USERNAMES = new Set([
+  'admin', 'administrator', 'custech', 'support', 'help', 'api', 
+  'dashboard', 'moderator', 'official', 'security', 'scamcheck', 
+  'marketplace', 'staff', 'system', 'root'
+]);
+
 // ==========================================
 // 1. VERIFICATION ACTIONS
 // ==========================================
@@ -220,16 +226,30 @@ export async function requestUsernameChange(newUsername: string, reason: string 
     return { success: false, error: 'Username must be 5-30 characters and contain only letters, numbers, and underscores.' };
   }
 
+  if (RESERVED_USERNAMES.has(clean)) {
+    return { success: false, error: 'This username is reserved by the platform and cannot be selected.' };
+  }
+
   const adminClient = await createAdminClient();
 
-  // Check if username is already taken in referral_code
-  const { data: existing } = await adminClient
+  // Check if username is already taken in referral_code or username column
+  const { data: existingRef } = await adminClient
     .from('profiles')
     .select('id')
-    .eq('referral_code', clean)
+    .ilike('referral_code', clean)
     .maybeSingle();
 
-  if (existing) {
+  if (existingRef) {
+    return { success: false, error: 'This username is already taken. Please choose another.' };
+  }
+
+  const { data: existingUserCol } = await adminClient
+    .from('profiles')
+    .select('id')
+    .ilike('username', clean)
+    .maybeSingle();
+
+  if (existingUserCol) {
     return { success: false, error: 'This username is already taken. Please choose another.' };
   }
 
@@ -296,31 +316,57 @@ export async function approveUsernameChange(reportId: string) {
   } catch {}
 
   const targetUserId = report.reported_id;
-  const newUsername = details.newUsername;
+  const newUsername = details.newUsername?.toLowerCase()?.trim();
 
   if (!newUsername) {
     return { success: false, error: 'Missing new username in request details' };
   }
 
-  // Verify availability one more time
-  const { data: taken } = await adminClient
+  if (RESERVED_USERNAMES.has(newUsername)) {
+    return { success: false, error: 'Cannot approve: Requested username is reserved by platform policies.' };
+  }
+
+  // Verify availability one more time against both columns
+  const { data: takenRef } = await adminClient
     .from('profiles')
     .select('id')
-    .eq('referral_code', newUsername)
+    .ilike('referral_code', newUsername)
     .maybeSingle();
 
-  if (taken) {
+  if (takenRef && takenRef.id !== targetUserId) {
     return { success: false, error: 'Username was claimed by someone else while pending.' };
   }
 
-  // 1. Update user profile referral_code
-  await adminClient
+  const { data: takenUserCol } = await adminClient
+    .from('profiles')
+    .select('id')
+    .ilike('username', newUsername)
+    .maybeSingle();
+
+  if (takenUserCol && takenUserCol.id !== targetUserId) {
+    return { success: false, error: 'Username was claimed by someone else while pending.' };
+  }
+
+  // 1. Update user profile referral_code and username
+  const updatePayload: Record<string, any> = { 
+    referral_code: newUsername,
+    updated_at: new Date().toISOString() 
+  };
+
+  const { error: updateErr } = await adminClient
     .from('profiles')
     .update({ 
-      referral_code: newUsername,
-      updated_at: new Date().toISOString() 
+      ...updatePayload,
+      username: newUsername
     })
     .eq('user_id', targetUserId);
+
+  if (updateErr) {
+    await adminClient
+      .from('profiles')
+      .update(updatePayload)
+      .eq('user_id', targetUserId);
+  }
 
   // 2. Mark report resolved
   await adminClient

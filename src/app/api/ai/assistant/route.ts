@@ -1,11 +1,42 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { generateText } from '@/lib/gemini';
 import { createClient } from '@/lib/supabase/server';
+
+// In-memory rate limiting: 10 requests per 60 seconds per client
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    // Determine client identifier (user ID or IP)
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
+    const clientId = user?.id || clientIp;
+
+    const now = Date.now();
+    const limitRecord = rateLimitMap.get(clientId);
+
+    if (limitRecord && now < limitRecord.resetTime) {
+      if (limitRecord.count >= 10) {
+        return NextResponse.json({
+          reply: 'You have sent several questions in a short period. Please wait a minute before asking another question.'
+        }, { status: 429 });
+      }
+      limitRecord.count += 1;
+    } else {
+      rateLimitMap.set(clientId, { count: 1, resetTime: now + 60000 });
+    }
+
+    // Clean up old rate limit entries periodically
+    if (rateLimitMap.size > 1000) {
+      for (const [key, value] of rateLimitMap.entries()) {
+        if (now > value.resetTime) {
+          rateLimitMap.delete(key);
+        }
+      }
+    }
 
     const body = await request.json();
     const { message } = body;

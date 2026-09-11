@@ -132,7 +132,7 @@ export function FundWalletModal({ isOpen, onClose }: FundWalletModalProps) {
               </>
             ) : (
               <>
-                <span>Proceed to Pay {amount ? formatPrice(typeof amount === 'number' ? amount : parseFloat(amount)) : ''}</span>
+                <span>Proceed to Pay {amount ? formatPrice((typeof amount === 'number' ? amount : parseFloat(amount)) * 100) : ''}</span>
                 <ExternalLink className="w-4 h-4 ml-1.5" />
               </>
             )}

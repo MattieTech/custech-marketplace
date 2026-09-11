@@ -265,12 +265,12 @@ export function AiSupportChatbot() {
             <div className="bg-emerald-50/50 border-t border-gray-100 px-3 py-1.5 flex items-center justify-between text-[11px] text-gray-600">
               <span className="font-medium text-emerald-950">Need human officer?</span>
               <a
-                href="https://wa.me/2348000000000?text=Hello%20CUSTECH%20Support%2C%20I%20need%20human%20assistance"
-                target="_blank"
-                rel="noopener noreferrer"
+                href={process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP 
+                  ? `https://wa.me/${process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP.replace(/[^0-9]/g, '')}?text=Hello%20CUSTECH%20Support%2C%20I%20need%20human%20assistance`
+                  : "/trust"}
                 className="font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1"
               >
-                <span>WhatsApp Support</span>
+                <span>Campus Trust Desk</span>
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>

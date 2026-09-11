@@ -37,6 +37,7 @@ export async function middleware(request: NextRequest) {
   supabaseResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   supabaseResponse.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
   supabaseResponse.headers.set('X-XSS-Protection', '1; mode=block')
+  supabaseResponse.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
 
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || 
                       request.nextUrl.pathname.startsWith('/register') || 
@@ -49,6 +50,7 @@ export async function middleware(request: NextRequest) {
   if (isProtectedRoute && !user) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/login'
+    redirectUrl.searchParams.set('redirect', request.nextUrl.pathname + request.nextUrl.search)
     return NextResponse.redirect(redirectUrl)
   }
 

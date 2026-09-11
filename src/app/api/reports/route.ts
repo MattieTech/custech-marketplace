@@ -32,16 +32,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Rate limit exceeded. Try again tomorrow.' }, { status: 429 });
     }
 
+    const reportedType = validatedData.reportedListingId ? 'listing' : 'user';
+    const reportedId = validatedData.reportedListingId || validatedData.reportedUserId;
+
+    if (!reportedId) {
+      return NextResponse.json({ message: 'Must provide either a reported user or listing' }, { status: 400 });
+    }
+
+    const details = validatedData.evidenceUrls && validatedData.evidenceUrls.length > 0
+      ? `${validatedData.description}\n\nEvidence: ${validatedData.evidenceUrls.join(', ')}`
+      : validatedData.description;
+
     // Insert report
     const { error: insertError } = await supabase
       .from('reports')
       .insert({
         reporter_id: user.id,
-        reported_user_id: validatedData.reportedUserId || null,
-        reported_listing_id: validatedData.reportedListingId || null,
-        category: validatedData.category,
-        description: validatedData.description,
-        evidence_urls: validatedData.evidenceUrls || [],
+        reported_type: reportedType,
+        reported_id: reportedId,
+        reason: validatedData.category,
+        details: details,
         status: 'pending'
       });
 

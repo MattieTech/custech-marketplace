@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
-import { ShieldCheck, KeyRound, CheckCircle, Award, FileText } from 'lucide-react'
+import { ShieldCheck, KeyRound, CheckCircle, Award, FileText, Loader2 } from 'lucide-react'
+import { verifyMeetupHandshakeAction } from '@/app/marketplace/[id]/actions'
 
 interface HandshakePinModalProps {
   open: boolean
@@ -34,20 +35,28 @@ export function HandshakePinModal({
   const [completed, setCompleted] = useState(false)
   const [verifying, setVerifying] = useState(false)
 
-  const handleVerify = () => {
-    if (inputPin.trim() !== pin) {
-      toast.error('Invalid 4-Digit Handshake PIN. Ask the buyer for the correct code shown on their screen.', 'PIN Mismatch')
-      return
+  const handleVerify = async () => {
+    if (!inputPin || inputPin.trim().length !== 4) {
+      toast.error('Please enter the 4-digit Handshake PIN.', 'Invalid PIN');
+      return;
     }
 
-    setVerifying(true)
-    setTimeout(() => {
-      setVerifying(false)
-      setCompleted(true)
-      toast.success('In-person trade verified! +1 added to your CUSTECH Verified Trades count.', 'Deal Completed')
-      onSuccess?.()
-    }, 1000)
-  }
+    setVerifying(true);
+    try {
+      const res = await verifyMeetupHandshakeAction(listingId, inputPin.trim());
+      if (res.success) {
+        setCompleted(true);
+        toast.success('In-person trade verified! +1 added to your CUSTECH Verified Trades count.', 'Deal Completed');
+        onSuccess?.();
+      } else {
+        toast.error(res.error || 'PIN verification failed. Ask the buyer for the correct code.', 'Verification Error');
+      }
+    } catch (err: any) {
+      toast.error('Network error while verifying deal. Please try again.');
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -117,7 +126,14 @@ export function HandshakePinModal({
               disabled={verifying || inputPin.length !== 4}
               className="w-full bg-green-700 hover:bg-green-800 text-white font-semibold"
             >
-              {verifying ? 'Verifying Handshake...' : 'Confirm Handover & Complete Trade'}
+              {verifying ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  <span>Verifying Handshake...</span>
+                </>
+              ) : (
+                'Confirm Handover & Complete Trade'
+              )}
             </Button>
           </div>
         ) : (

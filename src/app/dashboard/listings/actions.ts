@@ -46,6 +46,56 @@ export async function checkListingEligibility(): Promise<EligibilityResult> {
   };
 }
 
+const ALLOWED_IMAGE_MIME_TYPES: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
+async function uploadListingImages(
+  adminClient: any,
+  listingId: string,
+  formData: FormData
+) {
+  const files = formData.getAll('images') as File[];
+  const validImageFiles = files.filter(f => {
+    if (!f || f.size <= 0 || f.size > 5 * 1024 * 1024) return false;
+    const mime = (f.type || '').toLowerCase();
+    return Boolean(ALLOWED_IMAGE_MIME_TYPES[mime]);
+  });
+
+  for (let i = 0; i < Math.min(validImageFiles.length, 6); i++) {
+    const file = validImageFiles[i];
+    const mime = (file.type || 'image/jpeg').toLowerCase();
+    const ext = ALLOWED_IMAGE_MIME_TYPES[mime] || 'jpg';
+    const storagePath = `${listingId}-${Date.now()}-${i}.${ext}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const { error: uploadError } = await adminClient.storage
+      .from('listing-images')
+      .upload(storagePath, buffer, {
+        contentType: mime,
+        upsert: true
+      });
+
+    if (!uploadError) {
+      const { data: { publicUrl } } = adminClient.storage
+        .from('listing-images')
+        .getPublicUrl(storagePath);
+
+      await adminClient.from('listing_images').insert({
+        listing_id: listingId,
+        url: publicUrl,
+        storage_path: storagePath,
+        position: i
+      });
+    } else {
+      console.error('Failed to upload image', storagePath, uploadError);
+    }
+  }
+}
+
 /**
  * Creates a new marketplace product, donation, or student request listing.
  * Strict policy: ONLY verified members can publish.
@@ -150,38 +200,8 @@ export async function createMarketplaceListing(formData: FormData) {
       return { success: false, error: listingError?.message || 'Failed to insert listing into database.' };
     }
 
-    // Process image uploads
-    const files = formData.getAll('images') as File[];
-    const validImageFiles = files.filter(f => f && f.size > 0 && f.size <= 5 * 1024 * 1024);
-
-    for (let i = 0; i < Math.min(validImageFiles.length, 6); i++) {
-      const file = validImageFiles[i];
-      const ext = file.name.split('.').pop() || 'jpg';
-      const storagePath = `${listing.id}-${Date.now()}-${i}.${ext}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
-
-      const { error: uploadError } = await adminClient.storage
-        .from('listing-images')
-        .upload(storagePath, buffer, {
-          contentType: file.type || 'image/jpeg',
-          upsert: true
-        });
-
-      if (!uploadError) {
-        const { data: { publicUrl } } = adminClient.storage
-          .from('listing-images')
-          .getPublicUrl(storagePath);
-
-        await adminClient.from('listing_images').insert({
-          listing_id: listing.id,
-          url: publicUrl,
-          storage_path: storagePath,
-          position: i
-        });
-      } else {
-        console.error('Failed to upload image', storagePath, uploadError);
-      }
-    }
+    // Process image uploads safely
+    await uploadListingImages(adminClient, listing.id, formData);
 
     revalidatePath('/marketplace');
     revalidatePath('/dashboard/listings');
@@ -303,36 +323,8 @@ export async function createHousingListing(formData: FormData) {
       console.error('Error inserting property details:', propError);
     }
 
-    // 3. Process images
-    const files = formData.getAll('images') as File[];
-    const validFiles = files.filter(f => f && f.size > 0 && f.size <= 5 * 1024 * 1024);
-
-    for (let i = 0; i < Math.min(validFiles.length, 6); i++) {
-      const file = validFiles[i];
-      const ext = file.name.split('.').pop() || 'jpg';
-      const storagePath = `${listing.id}-${Date.now()}-${i}.${ext}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
-
-      const { error: uploadErr } = await adminClient.storage
-        .from('listing-images')
-        .upload(storagePath, buffer, {
-          contentType: file.type || 'image/jpeg',
-          upsert: true
-        });
-
-      if (!uploadErr) {
-        const { data: { publicUrl } } = adminClient.storage
-          .from('listing-images')
-          .getPublicUrl(storagePath);
-
-        await adminClient.from('listing_images').insert({
-          listing_id: listing.id,
-          url: publicUrl,
-          storage_path: storagePath,
-          position: i
-        });
-      }
-    }
+    // 3. Process images safely
+    await uploadListingImages(adminClient, listing.id, formData);
 
     revalidatePath('/housing');
     revalidatePath(`/housing/${listing.id}`);
@@ -455,36 +447,8 @@ export async function createServiceListing(formData: FormData) {
       console.error('Error inserting service details:', servError);
     }
 
-    // 3. Process portfolio images
-    const files = formData.getAll('images') as File[];
-    const validFiles = files.filter(f => f && f.size > 0 && f.size <= 5 * 1024 * 1024);
-
-    for (let i = 0; i < Math.min(validFiles.length, 6); i++) {
-      const file = validFiles[i];
-      const ext = file.name.split('.').pop() || 'jpg';
-      const storagePath = `${listing.id}-${Date.now()}-${i}.${ext}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
-
-      const { error: uploadErr } = await adminClient.storage
-        .from('listing-images')
-        .upload(storagePath, buffer, {
-          contentType: file.type || 'image/jpeg',
-          upsert: true
-        });
-
-      if (!uploadErr) {
-        const { data: { publicUrl } } = adminClient.storage
-          .from('listing-images')
-          .getPublicUrl(storagePath);
-
-        await adminClient.from('listing_images').insert({
-          listing_id: listing.id,
-          url: publicUrl,
-          storage_path: storagePath,
-          position: i
-        });
-      }
-    }
+    // 3. Process portfolio images safely
+    await uploadListingImages(adminClient, listing.id, formData);
 
     revalidatePath('/services');
     revalidatePath(`/services/${listing.id}`);

@@ -15,24 +15,29 @@ import { cn } from '@/lib/utils';
 
 export default function Home() {
   const categories = [
-    { name: 'Phones', icon: Smartphone, href: '/marketplace?category=phones', iconColor: 'text-blue-500', subtitle: 'Phones' },
-    { name: 'Laptops', icon: Laptop, href: '/marketplace?category=laptops', iconColor: 'text-purple-500', subtitle: 'Computers' },
-    { name: 'Books', icon: BookOpen, href: '/marketplace?category=books', iconColor: 'text-emerald-500', subtitle: 'Textbooks' },
-    { name: 'Fashion', icon: Shirt, href: '/marketplace?category=clothes', iconColor: 'text-amber-500', subtitle: 'Clothing' },
-    { name: 'Housing', icon: House, href: '/housing', iconColor: 'text-blue-600', subtitle: 'Lodges' },
-    { name: 'Repairs', icon: Wrench, href: '/services?category=repairs', iconColor: 'text-rose-500', subtitle: 'Fixes' },
-    { name: 'Food', icon: UtensilsCrossed, href: '/marketplace?category=food', iconColor: 'text-amber-600', subtitle: 'Campus Meals' },
-    { name: 'Design', icon: Palette, href: '/services?category=design', iconColor: 'text-purple-600', subtitle: 'Creative' },
-    { name: 'Gadgets', icon: Headphones, href: '/marketplace?category=gadgets', iconColor: 'text-cyan-500', subtitle: 'Accessories' },
-    { name: 'Academics', icon: GraduationCap, href: '/marketplace?category=academics', iconColor: 'text-teal-600', subtitle: 'Materials' },
-    { name: 'Deals', icon: Zap, href: '/deals', iconColor: 'text-emerald-500', subtitle: 'Discounts' },
-    { name: 'Free Items', icon: Gift, href: '/free-items', iconColor: 'text-indigo-500', subtitle: 'Donations' },
+    { name: 'Phones', icon: Smartphone, href: '/marketplace?category=phones', iconColor: 'text-blue-600', bgColor: 'bg-blue-50/80 group-hover:bg-blue-100', subtitle: 'Phones & Tech' },
+    { name: 'Laptops', icon: Laptop, href: '/marketplace?category=laptops', iconColor: 'text-purple-600', bgColor: 'bg-purple-50/80 group-hover:bg-purple-100', subtitle: 'PCs & Macs' },
+    { name: 'Books', icon: BookOpen, href: '/marketplace?category=books', iconColor: 'text-emerald-600', bgColor: 'bg-emerald-50/80 group-hover:bg-emerald-100', subtitle: 'Textbooks' },
+    { name: 'Fashion', icon: Shirt, href: '/marketplace?category=clothes', iconColor: 'text-amber-600', bgColor: 'bg-amber-50/80 group-hover:bg-amber-100', subtitle: 'Clothing & Wear' },
+    { name: 'Housing', icon: House, href: '/housing', iconColor: 'text-sky-600', bgColor: 'bg-sky-50/80 group-hover:bg-sky-100', subtitle: 'Lodges & Rooms' },
+    { name: 'Repairs', icon: Wrench, href: '/services?category=repairs', iconColor: 'text-rose-600', bgColor: 'bg-rose-50/80 group-hover:bg-rose-100', subtitle: 'Phone & PC Fixes' },
+    { name: 'Food', icon: UtensilsCrossed, href: '/marketplace?category=food', iconColor: 'text-orange-600', bgColor: 'bg-orange-50/80 group-hover:bg-orange-100', subtitle: 'Campus Meals' },
+    { name: 'Design', icon: Palette, href: '/services?category=design', iconColor: 'text-fuchsia-600', bgColor: 'bg-fuchsia-50/80 group-hover:bg-fuchsia-100', subtitle: 'Creative & Tech' },
+    { name: 'Gadgets', icon: Headphones, href: '/marketplace?category=gadgets', iconColor: 'text-cyan-600', bgColor: 'bg-cyan-50/80 group-hover:bg-cyan-100', subtitle: 'Audio & Power' },
+    { name: 'Academics', icon: GraduationCap, href: '/marketplace?category=academics', iconColor: 'text-teal-600', bgColor: 'bg-teal-50/80 group-hover:bg-teal-100', subtitle: 'Study Materials' },
+    { name: 'Deals', icon: Zap, href: '/deals', iconColor: 'text-emerald-600', bgColor: 'bg-emerald-50/80 group-hover:bg-emerald-100', subtitle: 'Discounts' },
+    { name: 'Free Items', icon: Gift, href: '/free-items', iconColor: 'text-indigo-600', bgColor: 'bg-indigo-50/80 group-hover:bg-indigo-100', subtitle: 'Donations (₦0)' },
   ];
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f8fafc]">
-      {/* Hero Section with Solid Light Green (No gradient) */}
-      <section className="w-full bg-emerald-500 py-12 md:py-20 text-white relative overflow-hidden">
+      {/* Hero Section with Ambient Campus Tech Depth */}
+      <section className="w-full bg-gradient-to-b from-emerald-600 via-emerald-600 to-green-600 py-12 md:py-20 text-white relative overflow-hidden">
+        {/* Subtle geometric dot-matrix overlay reflecting Science & Technology campus */}
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1.2px,transparent_1.2px)] [background-size:24px_24px] opacity-15 pointer-events-none" />
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+
         <PageContainer>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
             {/* Left Content Column */}
@@ -50,35 +55,57 @@ export default function Home() {
               </h1>
               
               <p className="text-sm sm:text-lg text-white/95 max-w-2xl leading-relaxed font-medium">
-                Buy, sell, offer services, find accommodation, discover businesses and trade safely with verified students, lecturers, and staff.
+                Buy, sell, offer services, find accommodation, discover businesses and trade safely with verified students, lecturers, and staff in Osara.
               </p>
 
-              {/* Search Capsule */}
-              <form action="/marketplace" method="GET" className="relative max-w-xl">
-                <div className="flex items-center rounded-full bg-white p-1.5 shadow-lg border border-white">
-                  <div className="pl-4 pr-2 text-slate-400">
-                    <Search className="w-5 h-5" />
+              {/* Search Capsule with Quick Trending Tags */}
+              <div className="space-y-2.5 max-w-xl">
+                <form action="/marketplace" method="GET" className="relative">
+                  <div className="flex items-center rounded-full bg-white p-1.5 shadow-xl border border-white">
+                    <div className="pl-4 pr-2 text-slate-400">
+                      <Search className="w-5 h-5" />
+                    </div>
+                    <input
+                      type="text"
+                      name="search"
+                      placeholder="Search laptops, phones, textbooks, hostels, services..."
+                      className="w-full py-2.5 text-sm font-semibold text-slate-900 placeholder:text-slate-400 bg-transparent focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="shrink-0 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold rounded-full transition-all shadow-md"
+                    >
+                      Search
+                    </button>
                   </div>
-                  <input
-                    type="text"
-                    name="search"
-                    placeholder="Search laptops, phones, textbooks, hostels, services..."
-                    className="w-full py-2.5 text-sm font-semibold text-slate-900 placeholder:text-slate-400 bg-transparent focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    className="shrink-0 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold rounded-full transition-all shadow-md"
-                  >
-                    Search
-                  </button>
+                </form>
+
+                {/* Popular Campus Search Tags */}
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-white/90 pt-0.5">
+                  <span className="font-bold text-white/75 text-[11px]">Trending on Campus:</span>
+                  {[
+                    { label: 'Laptops', href: '/marketplace?category=laptops' },
+                    { label: 'iPhones', href: '/marketplace?search=iPhone' },
+                    { label: 'Hostel Lodges', href: '/housing' },
+                    { label: 'Textbooks', href: '/marketplace?category=books' },
+                    { label: 'Free Items', href: '/free-items' },
+                  ].map((tag) => (
+                    <Link
+                      key={tag.label}
+                      href={tag.href}
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-[11px] font-medium text-white transition-all active:scale-95"
+                    >
+                      {tag.label}
+                    </Link>
+                  ))}
                 </div>
-              </form>
+              </div>
               
               {/* Action Buttons */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                 <Link 
                   href="/marketplace" 
-                  className="flex items-center justify-center px-4 py-2.5 bg-white hover:bg-slate-50 text-emerald-700 font-bold text-xs sm:text-sm rounded-2xl active:scale-95 transition-all shadow-md text-center"
+                  className="flex items-center justify-center px-4 py-2.5 bg-white hover:bg-slate-50 text-emerald-800 font-bold text-xs sm:text-sm rounded-2xl active:scale-95 transition-all shadow-md text-center"
                 >
                   Explore Market
                 </Link>
@@ -92,7 +119,7 @@ export default function Home() {
                   href="/housing" 
                   className="flex items-center justify-center px-4 py-2.5 bg-white/20 hover:bg-white/30 border border-white/40 text-white font-bold text-xs sm:text-sm rounded-2xl active:scale-95 transition-all shadow-xs text-center"
                 >
-                  Hostels
+                  Hostel Lodges
                 </Link>
                 <Link 
                   href="/dashboard/services/new" 
@@ -105,13 +132,13 @@ export default function Home() {
               {/* Trust Badges */}
               <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-white/95 pt-1">
                 <span className="flex items-center gap-1.5 bg-white/15 px-3 py-1 rounded-full border border-white/25">
-                  <ShieldCheck className="w-3.5 h-3.5 text-white" /> Fast ID Verification
+                  <ShieldCheck className="w-3.5 h-3.5 text-white" /> 100% Student Verified
                 </span>
                 <span className="flex items-center gap-1.5 bg-white/15 px-3 py-1 rounded-full border border-white/25">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" /> Direct-to-Seller Pay
+                  <CheckCircle2 className="w-3.5 h-3.5 text-white" /> 0% Middleman Fees
                 </span>
                 <span className="flex items-center gap-1.5 bg-white/15 px-3 py-1 rounded-full border border-white/25">
-                  <GraduationCap className="w-3.5 h-3.5 text-white" /> Campus Community Only
+                  <GraduationCap className="w-3.5 h-3.5 text-white" /> Osara Campus & Environs
                 </span>
               </div>
             </div>
@@ -144,33 +171,38 @@ export default function Home() {
         </PageContainer>
       </section>
 
-      {/* Category Section - Strictly Matching Screenshot 1 */}
-      <section className="py-8 sm:py-10 bg-white border-b border-slate-200/80">
+      {/* Category Section - Enhanced Modern Campus Grid */}
+      <section className="py-8 sm:py-12 bg-white border-b border-slate-200/80">
         <PageContainer>
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-6">
             <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold mb-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Explore Campus Life</span>
+              </div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Browse by Category</h2>
-              <p className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Find exactly what you need from the CUSTECH community</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Find products, student lodges, and peer services across CUSTECH</p>
             </div>
-            <Link href="/marketplace" className="text-xs sm:text-sm font-bold text-emerald-600 hover:text-emerald-700 hover:underline">
-              View all
+            <Link href="/marketplace" className="text-xs sm:text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 group">
+              <span>View all categories</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
             {categories.map((category) => (
               <Link
                 key={category.name}
                 href={category.href}
-                className="group flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-md transition-all duration-200 text-center"
+                className="group flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-md transition-all duration-200 text-center"
               >
-                <div className="w-8 h-8 flex items-center justify-center mb-1.5">
-                  <category.icon className={cn("w-6 h-6 stroke-[1.8] transition-transform duration-200 group-hover:scale-110", category.iconColor)} />
+                <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center mb-2 transition-transform duration-200 group-hover:scale-110", category.bgColor)}>
+                  <category.icon className={cn("w-5 h-5 stroke-[2]", category.iconColor)} />
                 </div>
                 <span className="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
                   {category.name}
                 </span>
-                <span className="text-[10px] sm:text-[11px] text-slate-400 font-normal mt-0.5">
+                <span className="text-[10px] sm:text-[11px] text-slate-400 font-normal mt-0.5 truncate max-w-full">
                   {category.subtitle}
                 </span>
               </Link>

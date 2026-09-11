@@ -22,11 +22,12 @@ export default async function DealsPage() {
       title,
       description,
       deal_price,
-      terms,
-      start_date,
-      end_date,
+      original_price,
+      discount_percentage,
+      starts_at,
+      expires_at,
       business_id,
-      businesses:business_id(id, name, location)
+      businesses:business_id(id, name, address)
     `)
     .eq('is_active', true)
     .order('created_at', { ascending: false });
@@ -40,8 +41,11 @@ export default async function DealsPage() {
       business_id: d.business_id,
       business_name: biz?.name || 'Campus Merchant',
       deal_price: d.deal_price,
-      expires_at: d.end_date ? new Date(d.end_date).toLocaleDateString() : 'Ongoing',
-      terms: d.terms || 'Valid with active CUSTECH student identity.'
+      original_price: d.original_price,
+      discount_percentage: d.discount_percentage,
+      location: biz?.address || 'CUSTECH Campus, Osara',
+      expires_at: d.expires_at ? new Date(d.expires_at).toLocaleDateString() : 'Ongoing',
+      terms: 'Valid with active CUSTECH student identity.'
     };
   }) : [];
 

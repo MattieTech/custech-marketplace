@@ -59,7 +59,7 @@ export async function getUserOrders(): Promise<{
       .from('escrow_orders')
       .select(`
         *,
-        listing:listings(id, title, price, images)
+        listing:listings(id, title, price, listing_images(url))
       `)
       .eq('buyer_id', user.id)
       .order('created_at', { ascending: false });
@@ -73,7 +73,7 @@ export async function getUserOrders(): Promise<{
       .from('escrow_orders')
       .select(`
         *,
-        listing:listings(id, title, price, images)
+        listing:listings(id, title, price, listing_images(url))
       `)
       .eq('seller_id', user.id)
       .order('created_at', { ascending: false });
@@ -126,7 +126,12 @@ export async function getUserOrders(): Promise<{
         buyerNotes: order.buyer_notes,
         sellerNotes: order.seller_notes,
         createdAt: order.created_at,
-        listing: order.listing || null,
+        listing: order.listing ? {
+          id: order.listing.id,
+          title: order.listing.title,
+          price: Number(order.listing.price || 0),
+          images: order.listing.listing_images?.map((img: any) => img.url) || [],
+        } : null,
         counterparty: counterpartyProfile ? {
           userId: counterpartyProfile.user_id,
           displayName: counterpartyProfile.display_name || (isPurchase ? 'Seller' : 'Buyer'),

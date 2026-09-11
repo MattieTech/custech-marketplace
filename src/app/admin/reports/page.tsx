@@ -12,16 +12,58 @@ export default async function ReportsPage() {
   await checkAdminAccess(['super_admin', 'moderator']);
   const adminClient = await createAdminClient();
   
-  const { data: reports } = await adminClient
+  const { data: rawReports } = await adminClient
     .from('reports')
-    .select(`
-      *,
-      reporter:profiles!reports_reporter_id_fkey(display_name),
-      reported_user:profiles!reports_reported_id_fkey(display_name),
-      listing:listings!reports_listing_id_fkey(title)
-    `)
-    .in('status', ['pending', 'reviewing'])
+    .select('*')
+    .in('status', ['pending', 'investigating'])
     .order('created_at', { ascending: false });
+
+  const rawList = rawReports || [];
+  const reporterIds = [...new Set(rawList.map((r: any) => r.reporter_id).filter(Boolean))];
+  const userReportTargetIds = [
+    ...new Set(rawList.filter((r: any) => r.reported_type === 'user').map((r: any) => r.reported_id).filter(Boolean))
+  ];
+  const listingReportTargetIds = [
+    ...new Set(rawList.filter((r: any) => r.reported_type === 'listing').map((r: any) => r.reported_id).filter(Boolean))
+  ];
+
+  const allProfileIds = [...new Set([...reporterIds, ...userReportTargetIds])];
+
+  let profileMap: Record<string, any> = {};
+  if (allProfileIds.length > 0) {
+    const { data: profiles } = await adminClient
+      .from('profiles')
+      .select('user_id, display_name')
+      .in('user_id', allProfileIds);
+
+    profileMap = (profiles || []).reduce((acc: any, p: any) => {
+      acc[p.user_id] = p;
+      return acc;
+    }, {});
+  }
+
+  let listingMap: Record<string, any> = {};
+  if (listingReportTargetIds.length > 0) {
+    const { data: listings } = await adminClient
+      .from('listings')
+      .select('id, title')
+      .in('id', listingReportTargetIds);
+
+    listingMap = (listings || []).reduce((acc: any, l: any) => {
+      acc[l.id] = l;
+      return acc;
+    }, {});
+  }
+
+  const reports = rawList.map((r: any) => ({
+    ...r,
+    target_type: r.reported_type,
+    category: r.reason || r.reported_type || 'General',
+    listing_id: r.reported_type === 'listing' ? r.reported_id : null,
+    reporter: profileMap[r.reporter_id] || { display_name: 'Campus User' },
+    reported_user: profileMap[r.reported_id] || { display_name: 'Reported User' },
+    listing: listingMap[r.reported_id] || { title: 'Reported Item' },
+  }));
 
   const getCategoryBadge = (category: string) => {
     return <Badge variant="secondary" className="capitalize">{category.replace(/_/g, ' ')}</Badge>;

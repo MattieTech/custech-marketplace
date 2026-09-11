@@ -36,18 +36,27 @@ export async function GET(req: NextRequest) {
     }
 
     const admin = await createAdminClient();
-    const { data: existing, error } = await admin
+
+    // 1. Check referral_code (primary student vanity handle)
+    const { data: byReferral } = await admin
       .from('profiles')
       .select('id')
       .ilike('referral_code', username)
       .maybeSingle();
 
-    if (error) {
-      console.error('Check username error:', error);
-      return NextResponse.json({ available: false, message: 'Error checking availability.' }, { status: 500 });
+    if (byReferral) {
+      return NextResponse.json({ available: false, message: 'Username is already taken.' });
     }
 
-    if (existing) {
+    // 2. Check username column (migration 006)
+    const { data: byUsername, error: userColError } = await admin
+      .from('profiles')
+      .select('id')
+      .ilike('username', username)
+      .maybeSingle();
+
+    // Only treat as taken if found; ignore error if column not yet applied
+    if (byUsername) {
       return NextResponse.json({ available: false, message: 'Username is already taken.' });
     }
 

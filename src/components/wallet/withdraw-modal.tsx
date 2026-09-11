@@ -56,7 +56,9 @@ export function WithdrawModal({
       return;
     }
 
-    if (numAmount > availableBalance) {
+    const numAmountKobo = Math.round(numAmount * 100);
+
+    if (numAmountKobo > availableBalance) {
       setError(`Amount exceeds your available balance of ${formatPrice(availableBalance)}`);
       return;
     }
@@ -68,7 +70,7 @@ export function WithdrawModal({
     setIsLoading(false);
 
     if (res.success) {
-      toast.success(`Withdrawal request of ${formatPrice(numAmount)} submitted! Processing to your bank account.`, 'Withdrawal Initiated');
+      toast.success(`Withdrawal request of ${formatPrice(numAmountKobo)} submitted! Processing to your bank account.`, 'Withdrawal Initiated');
       onClose();
       setAmount('');
       onWithdrawSuccess();

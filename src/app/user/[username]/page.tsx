@@ -13,12 +13,20 @@ export default async function UserPage({ params }: { params: Promise<{ username:
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Search by referral_code (exact/ilike username) OR fallback to user_id / profile id
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('*')
-    .or(`referral_code.ilike.${cleanUsername},display_name.ilike.${cleanUsername},user_id.eq.${cleanUsername},id.eq.${cleanUsername}`)
-    .maybeSingle();
+  // Check if username is a valid UUID before testing UUID columns to avoid Postgres syntax error
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanUsername);
+  const safeUsername = cleanUsername.replace(/[^a-zA-Z0-9_\-\s]/g, '').trim();
+
+  let profileQuery = admin.from('profiles').select('*');
+  if (isUuid) {
+    profileQuery = profileQuery.or(`user_id.eq.${cleanUsername},id.eq.${cleanUsername},referral_code.ilike.${cleanUsername}`);
+  } else if (safeUsername) {
+    profileQuery = profileQuery.or(`referral_code.ilike.${safeUsername},display_name.ilike.${safeUsername}`);
+  } else {
+    notFound();
+  }
+
+  const { data: profile } = await profileQuery.maybeSingle();
 
   if (!profile) {
     notFound();

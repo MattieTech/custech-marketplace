@@ -64,18 +64,45 @@ export async function submitVerification(formData: FormData) {
       return { success: false, error: 'A live student profile picture is required to display on your profile.' };
     }
 
+    const ALLOWED_AVATAR_MIMES: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+
+    const avatarMime = (profilePicture.type || '').toLowerCase();
+    if (!ALLOWED_AVATAR_MIMES[avatarMime]) {
+      return { success: false, error: 'Profile picture must be a valid image (JPG, PNG, or WebP).' };
+    }
+
     if (verificationMethod === 'id_card' && (!document || document.size === 0)) {
       return { success: false, error: 'School ID card document is required for Fast Track verification.' };
     }
 
+    const ALLOWED_DOC_MIMES: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'application/pdf': 'pdf',
+    };
+
+    if (document && document.size > 0) {
+      const docMime = (document.type || '').toLowerCase();
+      if (!ALLOWED_DOC_MIMES[docMime]) {
+        return { success: false, error: 'Student ID document must be a valid image or PDF.' };
+      }
+    }
+
     // 1. Upload Profile Picture
     let avatarUrl = '';
-    const avatarExt = profilePicture.name.split('.').pop() || 'jpg';
+    const avatarExt = ALLOWED_AVATAR_MIMES[avatarMime] || 'jpg';
     const avatarFileName = `avatar-${user.id}-${Date.now()}.${avatarExt}`;
     
     const { error: avatarError, data: avatarData } = await supabase.storage
       .from('avatars')
-      .upload(avatarFileName, profilePicture, { upsert: true });
+      .upload(avatarFileName, profilePicture, { upsert: true, contentType: avatarMime });
 
     if (!avatarError && avatarData) {
       const { data: publicUrlData } = supabase.storage
@@ -86,7 +113,7 @@ export async function submitVerification(formData: FormData) {
       // Fallback to verification-documents bucket if avatars bucket isn't created
       const { data: fallbackAvatar } = await supabase.storage
         .from('verification-documents')
-        .upload(`avatar-${avatarFileName}`, profilePicture);
+        .upload(`avatar-${avatarFileName}`, profilePicture, { contentType: avatarMime });
       if (fallbackAvatar) {
         const { data: fbUrl } = supabase.storage
           .from('verification-documents')
@@ -98,11 +125,12 @@ export async function submitVerification(formData: FormData) {
     // 2. Upload ID Document if provided
     let documentPath = '';
     if (document && document.size > 0) {
-      const fileExt = document.name.split('.').pop() || 'jpg';
+      const docMime = (document.type || '').toLowerCase();
+      const fileExt = ALLOWED_DOC_MIMES[docMime] || 'jpg';
       const docFileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      const { data: uploadData } = await supabase.storage
         .from('verification-documents')
-        .upload(docFileName, document);
+        .upload(docFileName, document, { contentType: docMime });
       
       if (uploadData) {
         documentPath = uploadData.path;

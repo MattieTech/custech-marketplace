@@ -11,12 +11,20 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Fetch profile by user_id, profile id, or referral_code (username)
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('*')
-    .or(`user_id.eq.${userId},id.eq.${userId},referral_code.ilike.${userId}`)
-    .maybeSingle();
+  const cleanId = decodeURIComponent(userId).replace(/^@/, '').trim();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+  const safeQuery = cleanId.replace(/[^a-zA-Z0-9_\-\s]/g, '').trim();
+
+  let profileQuery = admin.from('profiles').select('*');
+  if (isUuid) {
+    profileQuery = profileQuery.or(`user_id.eq.${cleanId},id.eq.${cleanId},referral_code.ilike.${cleanId}`);
+  } else if (safeQuery) {
+    profileQuery = profileQuery.or(`referral_code.ilike.${safeQuery},display_name.ilike.${safeQuery}`);
+  } else {
+    notFound();
+  }
+
+  const { data: profile } = await profileQuery.maybeSingle();
 
   if (!profile) {
     notFound();

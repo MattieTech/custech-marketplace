@@ -18,11 +18,15 @@ DECLARE
     list4_id UUID;
     list5_id UUID;
 BEGIN
-    -- 1. Grab the first registered user
-    SELECT id INTO demo_user_id FROM auth.users ORDER BY created_at ASC LIMIT 1;
+    -- 1. Safely target only dedicated demo accounts (never overwrite admin or real student accounts)
+    SELECT id INTO demo_user_id FROM auth.users WHERE email = 'demo@custech.edu.ng' LIMIT 1;
     
     IF demo_user_id IS NULL THEN
-        RAISE NOTICE 'Please sign up/register an account first on http://localhost:3000/register before running this seed script!';
+        SELECT id INTO demo_user_id FROM auth.users WHERE email ILIKE '%demo%' ORDER BY created_at ASC LIMIT 1;
+    END IF;
+
+    IF demo_user_id IS NULL THEN
+        RAISE NOTICE 'Safety safeguard: To protect real administrator and student accounts from overwrite, please register a demo account with an email containing "demo" (e.g. demo@custech.edu.ng) before running this seed script.';
         RETURN;
     END IF;
 

@@ -67,7 +67,7 @@ export function HousingCard({ property }: HousingCardProps) {
     if (property.phone_number) {
       window.location.href = `tel:${property.phone_number}`;
     } else {
-      toast.success('Landlord phone: 0812 345 6789');
+      toast.error('No contact phone number provided. Please send a message on the platform.');
     }
   };
 
@@ -207,11 +207,15 @@ export function HousingCard({ property }: HousingCardProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-1 font-bold text-slate-800 text-xs shrink-0">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span>{property.landlord_rating}</span>
-              <span className="text-[10px] text-slate-400 font-normal">({property.landlord_reviews_count})</span>
-            </div>
+            {property.landlord_reviews_count > 0 ? (
+              <div className="flex items-center gap-1 font-bold text-slate-800 text-xs shrink-0">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span>{property.landlord_rating.toFixed(1)}</span>
+                <span className="text-[10px] text-slate-400 font-normal">({property.landlord_reviews_count})</span>
+              </div>
+            ) : (
+              <span className="text-[11px] text-slate-400 font-medium shrink-0">New Lister</span>
+            )}
           </div>
 
           {/* Cost Breakdown Gray Box */}

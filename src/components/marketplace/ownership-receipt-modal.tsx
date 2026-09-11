@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -25,6 +25,7 @@ interface OwnershipReceiptModalProps {
   buyerName?: string
   serialNumber?: string
   location?: string
+  isConfirmed?: boolean
 }
 
 export function OwnershipReceiptModal({
@@ -34,7 +35,8 @@ export function OwnershipReceiptModal({
   seller,
   buyerName = 'Current Student Buyer',
   serialNumber = 'N/A',
-  location = 'CUSTECH Campus, Osara'
+  location = 'CUSTECH Campus, Osara',
+  isConfirmed = false,
 }: OwnershipReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null)
   const certId = `CST-GATE-${listing.id.substring(0, 8).toUpperCase()}`
@@ -81,8 +83,13 @@ export function OwnershipReceiptModal({
             <p className="text-[11px] text-gray-500 mt-0.5">
               Confluence University of Science and Technology, Osara, Kogi State
             </p>
-            <div className="mt-2 inline-block bg-green-50 border border-green-200 px-3 py-1 rounded-full text-[11px] font-mono font-bold text-green-800">
-              Certificate No: {certId}
+            <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold ${
+              isConfirmed 
+                ? 'bg-green-50 border border-green-200 text-green-800' 
+                : 'bg-amber-50 border border-amber-200 text-amber-800'
+            }`}>
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Certificate No: {certId} • {isConfirmed ? 'OFFICIAL VERIFIED' : 'DRAFT PREVIEW'}</span>
             </div>
           </div>
 

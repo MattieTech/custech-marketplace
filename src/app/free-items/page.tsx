@@ -7,6 +7,7 @@ import { Search, Filter, Gift } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CATEGORIES } from "@/lib/constants"
+import { sanitizeSearchQuery } from "@/lib/utils"
 
 export const metadata = {
   title: "Free Items | CUSTECH Marketplace",
@@ -25,7 +26,7 @@ export default async function FreeItemsPage(props: FreeItemsPageProps) {
   const searchParams = await props.searchParams
   const supabase = await createClient()
   
-  const query = searchParams.q || ""
+  const query = sanitizeSearchQuery(searchParams.q)
   const category = searchParams.category || ""
   const page = parseInt(searchParams.page || "1")
   const limit = 12
@@ -35,28 +36,51 @@ export default async function FreeItemsPage(props: FreeItemsPageProps) {
     .from("listings")
     .select(`
       *,
-      seller:seller_id (
-        id,
-        full_name,
-        avatar_url,
-        is_verified,
-        trust_score
-      )
+      listing_images(url),
+      category:categories(name, slug)
     `, { count: "exact" })
     .eq("listing_type", "free")
     .eq("status", "active")
     .eq("price", 0)
     .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1)
+    .range(offset, offset + limit - 1);
 
   if (query) {
-    dbQuery = dbQuery.ilike("title", `%${query}%`)
+    dbQuery = dbQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
   }
   if (category && category !== "all") {
-    dbQuery = dbQuery.eq("category", category)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category);
+    if (isUuid) {
+      dbQuery = dbQuery.eq("category_id", category);
+    } else {
+      const { data: cat } = await supabase.from('categories').select('id').eq('slug', category).maybeSingle();
+      if (cat?.id) {
+        dbQuery = dbQuery.eq("category_id", cat.id);
+      }
+    }
   }
 
-  const { data: freeItems, count, error } = await dbQuery
+  const { data: rawItems, count, error } = await dbQuery;
+
+  let freeItems = rawItems || [];
+  if (freeItems.length > 0) {
+    const userIds = [...new Set(freeItems.map((item: any) => item.seller_id || item.user_id).filter(Boolean))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url, is_verified, trust_level')
+      .in('user_id', userIds);
+
+    const profileMap = (profiles || []).reduce((acc: any, p: any) => {
+      acc[p.user_id] = p;
+      return acc;
+    }, {});
+
+    freeItems = freeItems.map((item: any) => ({
+      ...item,
+      seller: profileMap[item.seller_id || item.user_id] || null,
+      images: item.listing_images?.map((img: any) => img.url) || [],
+    }));
+  }
 
   return (
     <PageContainer>

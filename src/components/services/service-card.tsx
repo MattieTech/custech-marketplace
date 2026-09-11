@@ -150,13 +150,24 @@ export function ServiceCard({ service }: ServiceCardProps) {
           <div className="grid grid-cols-3 gap-2 text-center pt-1">
             {/* Rating */}
             <div className="bg-slate-50/90 rounded-xl py-2 px-1 border border-slate-100 flex flex-col items-center justify-center">
-              <div className="flex items-center gap-0.5 text-xs font-bold text-slate-800">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span>{service.rating}</span>
-              </div>
-              <span className="text-[10px] text-slate-400 font-normal mt-0.5">
-                {service.reviews_count} reviews
-              </span>
+              {service.reviews_count > 0 ? (
+                <>
+                  <div className="flex items-center gap-0.5 text-xs font-bold text-slate-800">
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                    <span>{service.rating.toFixed(1)}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-normal mt-0.5">
+                    {service.reviews_count} reviews
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-xs font-bold text-slate-800">Fresh</span>
+                  <span className="text-[10px] text-slate-400 font-normal mt-0.5">
+                    New Service
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Jobs Completed */}

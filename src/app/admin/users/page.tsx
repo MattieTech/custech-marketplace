@@ -28,11 +28,11 @@ export default async function UsersPage({
     .range(offset, offset + limit - 1);
 
   if (query) {
-    dbQuery = dbQuery.or(`display_name.ilike.%${query}%,email.ilike.%${query}%`);
+    dbQuery = dbQuery.or(`display_name.ilike.%${query}%,referral_code.ilike.%${query}%,matric_number.ilike.%${query}%`);
   }
   
-  if (status) {
-    dbQuery = dbQuery.eq('status', status);
+  if (status && status !== 'all') {
+    dbQuery = dbQuery.eq('verification_status', status);
   }
 
   const { data: users, count } = await dbQuery;
@@ -110,7 +110,9 @@ export default async function UsersPage({
                               {user.display_name}
                               {getVerificationBadge(user.verification_status)}
                             </div>
-                            <div className="text-slate-500 text-xs">{user.email || 'No email provided'}</div>
+                            <div className="text-slate-500 text-xs">
+                              {user.matric_number || (user.referral_code ? `@${user.referral_code}` : 'CUSTECH Student')}
+                            </div>
                           </div>
                         </div>
                       </td>

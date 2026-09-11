@@ -34,6 +34,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { AISearchBar } from './ai-search-bar';
 
 export function Header() {
@@ -504,25 +505,31 @@ export function Header() {
               </div>
             </Link>
             
-            <nav className="hidden lg:flex items-center gap-1 p-1 bg-slate-100/70 rounded-full border border-slate-200/60 shadow-xs">
-              <Link href="/marketplace" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
-                Marketplace
-              </Link>
-              <Link href="/services" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
-                Services
-              </Link>
-              <Link href="/housing" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
-                Housing
-              </Link>
-              <Link href="/businesses" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
-                Businesses
-              </Link>
-              <Link href="/deals" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
-                Deals
-              </Link>
-              <Link href="/scam-check" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">
-                ScamCheck
-              </Link>
+            <nav className="hidden lg:flex items-center gap-1 p-1 bg-slate-100/80 rounded-full border border-slate-200/70 shadow-xs">
+              {[
+                { href: '/marketplace', label: 'Marketplace' },
+                { href: '/services', label: 'Services' },
+                { href: '/housing', label: 'Housing' },
+                { href: '/businesses', label: 'Businesses' },
+                { href: '/deals', label: 'Deals' },
+                { href: '/scam-check', label: 'ScamCheck' },
+              ].map((link) => {
+                const isActive = pathname === link.href || pathname?.startsWith(`${link.href}/`);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "px-3.5 py-1.5 rounded-full text-xs transition-all",
+                      isActive 
+                        ? "bg-white text-emerald-700 font-bold shadow-xs" 
+                        : "font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 

@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, MailCheck, AlertCircle } from 'lucide-react'
 import { resendConfirmationEmailAction } from '../register/actions'
+import { sanitizeRedirectPath } from '@/lib/utils'
 
 function LoginForm() {
   const router = useRouter()
@@ -51,8 +52,9 @@ function LoginForm() {
       
       toast.success('Signed in successfully! Redirecting to dashboard...')
       
-      // Immediate direct redirect to dashboard
-      const nextDestination = searchParams.get('redirect') || searchParams.get('next') || '/dashboard'
+      // Immediate direct redirect to dashboard with sanitization
+      const rawTarget = searchParams.get('redirect') || searchParams.get('next')
+      const nextDestination = sanitizeRedirectPath(rawTarget, '/dashboard')
       window.location.assign(nextDestination)
     } catch (err: any) {
       const msg = err.message || 'Invalid email or password.'

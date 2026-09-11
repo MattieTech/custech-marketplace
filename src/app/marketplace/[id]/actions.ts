@@ -190,6 +190,15 @@ export async function createEscrowOrder(
     return { success: false, error: 'This item is no longer active for purchase.' };
   }
 
+  if (!listing.price || listing.price <= 0) {
+    return { success: false, error: 'Cannot create an escrow order for free items or items without a set price.' };
+  }
+
+  const validPaymentMethods = ['wallet', 'paystack', 'direct'];
+  if (!validPaymentMethods.includes(paymentMethod)) {
+    return { success: false, error: 'Invalid payment method selected.' };
+  }
+
   // Generate unique order number
   const orderNumber = `CUS-ESC-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -238,3 +247,74 @@ export async function createEscrowOrder(
 
   return { success: true, order: newOrder, funded: false };
 }
+
+export async function verifyMeetupHandshakeAction(listingId: string, inputPin: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: 'You must be signed in to verify a campus trade.' };
+    }
+
+    const admin = await createAdminClient();
+
+    // Fetch listing
+    const { data: listing, error: listErr } = await admin
+      .from('listings')
+      .select('id, user_id, seller_id, title, status')
+      .eq('id', listingId)
+      .maybeSingle();
+
+    if (listErr || !listing) {
+      return { success: false, error: 'Listing not found.' };
+    }
+
+    const sellerId = listing.seller_id || listing.user_id;
+
+    // Check PIN matching
+    const seed = listingId.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+    const expectedPin = String((seed % 9000) + 1000);
+
+    if (inputPin.trim() !== expectedPin) {
+      return { success: false, error: 'Invalid 4-digit Handshake PIN. Please verify with the buyer.' };
+    }
+
+    // Mark listing as sold
+    await admin
+      .from('listings')
+      .update({ status: 'sold', updated_at: new Date().toISOString() })
+      .eq('id', listingId);
+
+    // Increment completed transactions count
+    const { data: prof } = await admin
+      .from('profiles')
+      .select('completed_transactions')
+      .eq('user_id', sellerId)
+      .maybeSingle();
+
+    await admin
+      .from('profiles')
+      .update({
+        completed_transactions: (prof?.completed_transactions || 0) + 1,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', sellerId);
+
+    // Record notification for seller
+    await admin.from('notifications').insert({
+      user_id: sellerId,
+      type: 'trade_verified',
+      title: 'Handshake Trade Verified!',
+      body: `Your in-person handover for "${listing.title}" has been verified. +1 verified trade recorded.`,
+      data: { listingId }
+    });
+
+    revalidatePath(`/marketplace/${listingId}`);
+    revalidatePath('/dashboard/listings');
+    return { success: true };
+  } catch (err: any) {
+    console.error('verifyMeetupHandshakeAction error:', err);
+    return { success: false, error: err.message || 'Failed to complete handshake verification' };
+  }
+}
+

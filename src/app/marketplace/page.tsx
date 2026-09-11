@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
+import { sanitizeSearchQuery } from '@/lib/utils';
+
 export const metadata = {
   title: 'Marketplace - CUSTECH',
   description: 'Buy and sell within the CUSTECH community',
@@ -25,7 +27,7 @@ async function getListings(searchParams: any) {
     .eq('listing_type', 'product')
     .eq('status', 'active');
 
-  const searchTerm = (searchParams.search || searchParams.q || '').trim();
+  const searchTerm = sanitizeSearchQuery(searchParams.search || searchParams.q);
   if (searchTerm) {
     query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
   }

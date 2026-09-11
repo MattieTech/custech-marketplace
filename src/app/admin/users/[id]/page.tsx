@@ -23,13 +23,19 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
     notFound();
   }
 
+  // Fetch auth user data for email and status
+  const { data: authUserData } = await adminClient.auth.admin.getUserById(user.user_id);
+  const authEmail = authUserData?.user?.email || null;
+  const isBanned = !!authUserData?.user?.banned_until && new Date(authUserData.user.banned_until) > new Date();
+  const accountStatus = isBanned ? 'banned' : 'active';
+
   // Fetch some stats for this user
   const [
     { count: listingsCount },
     { count: reportsAgainst }
   ] = await Promise.all([
-    adminClient.from('listings').select('*', { count: 'exact', head: true }).eq('seller_id', user.id),
-    adminClient.from('reports').select('*', { count: 'exact', head: true }).eq('reported_id', user.id)
+    adminClient.from('listings').select('*', { count: 'exact', head: true }).eq('seller_id', user.user_id),
+    adminClient.from('reports').select('*', { count: 'exact', head: true }).eq('reported_id', user.user_id)
   ]);
 
   const getStatusBadge = (status: string) => {
@@ -53,12 +59,12 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
         <div className="flex space-x-3">
-          {user.status === 'active' ? (
+          {!isBanned ? (
             <>
               <form action={async () => {
                 'use server';
                 const { suspendUser } = await import('@/app/admin/actions');
-                await suspendUser(user.id, 'Administrative action via dashboard');
+                await suspendUser(user.user_id, 'Administrative action via dashboard');
               }}>
                 <Button variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
                   <AlertTriangle className="mr-2 h-4 w-4" /> Suspend
@@ -67,7 +73,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
               <form action={async () => {
                 'use server';
                 const { banUser } = await import('@/app/admin/actions');
-                await banUser(user.id, 'Administrative ban via dashboard');
+                await banUser(user.user_id, 'Administrative ban via dashboard');
               }}>
                 <Button variant="destructive">
                   <Ban className="mr-2 h-4 w-4" /> Ban User
@@ -75,7 +81,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
               </form>
             </>
           ) : (
-            <Badge variant="outline" className="px-4 py-2 text-sm">Account {user.status}</Badge>
+            <Badge variant="outline" className="px-4 py-2 text-sm text-rose-600 border-rose-200">Account Banned</Badge>
           )}
         </div>
       </div>
@@ -105,17 +111,17 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
               <div className="text-center">
                 <h2 className="text-xl font-bold text-slate-900">{user.display_name}</h2>
                 <div className="mt-1 flex justify-center space-x-2">
-                  {getStatusBadge(user.status || 'active')}
+                  {getStatusBadge(accountStatus)}
                   <Badge variant="outline" className="capitalize">{user.trust_level?.replace(/_/g, ' ') || 'New'}</Badge>
                 </div>
               </div>
             </div>
 
             <div className="space-y-3 pt-4 border-t">
-              {user.email && (
+              {authEmail && (
                 <div className="flex items-center text-sm text-slate-600">
                   <Mail className="h-4 w-4 mr-3 text-slate-400" />
-                  {user.email}
+                  {authEmail}
                 </div>
               )}
               {user.phone && (

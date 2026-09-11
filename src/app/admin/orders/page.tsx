@@ -14,7 +14,7 @@ export default async function AdminOrdersPage() {
     .from('escrow_orders')
     .select(`
       *,
-      listing:listings(id, title, price, images)
+      listing:listings(id, title, price, listing_images(url))
     `)
     .order('created_at', { ascending: false });
 
@@ -39,11 +39,19 @@ export default async function AdminOrdersPage() {
     }, {});
   }
 
-  const orders = rawList.map((o: any) => ({
-    ...o,
-    buyer: profileMap[o.buyer_id] || null,
-    seller: profileMap[o.seller_id] || null,
-  }));
+  const orders = rawList.map((o: any) => {
+    const rawListing = o.listing;
+    const images = rawListing?.listing_images?.map((img: any) => img.url) || [];
+    return {
+      ...o,
+      listing: rawListing ? {
+        ...rawListing,
+        images,
+      } : null,
+      buyer: profileMap[o.buyer_id] || null,
+      seller: profileMap[o.seller_id] || null,
+    };
+  });
 
   // Compute summary stats
   const totalLockedAmount = orders

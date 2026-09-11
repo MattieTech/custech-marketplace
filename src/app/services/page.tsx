@@ -5,6 +5,7 @@ import { ServiceCard, ServiceItem } from '@/components/services/service-card';
 import { createClient } from '@/lib/supabase/server';
 import { Search, Briefcase, ShieldCheck, Sparkles, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { sanitizeSearchQuery } from '@/lib/utils';
 
 export const metadata = {
   title: 'Student Services - CUSTECH Marketplace',
@@ -18,7 +19,7 @@ export default async function ServicesPage({
 }) {
   const resolvedParams = await searchParams;
   const activeCategory = resolvedParams?.category || 'all';
-  const query = (resolvedParams?.q || '').toLowerCase().trim();
+  const query = sanitizeSearchQuery(resolvedParams?.q);
 
   let services: ServiceItem[] = [];
 

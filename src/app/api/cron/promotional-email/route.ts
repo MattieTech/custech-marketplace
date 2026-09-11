@@ -3,6 +3,16 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { sendBatchPromotionalBroadcast } from '@/lib/resend';
 import { PRESET_EMAIL_CAMPAIGNS } from '@/lib/email-templates';
 
+import crypto from 'crypto';
+
+function timingSafeMatch(provided: string | null | undefined, secret: string): boolean {
+  if (!provided) return false;
+  const provBuf = Buffer.from(provided);
+  const secBuf = Buffer.from(secret);
+  if (provBuf.length !== secBuf.length) return false;
+  return crypto.timingSafeEqual(provBuf, secBuf);
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -10,8 +20,14 @@ export async function GET(request: Request) {
     const secret = searchParams.get('secret');
     const cronSecret = process.env.CRON_SECRET;
 
-    // Verify secret if CRON_SECRET is configured
-    if (cronSecret && secret !== cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // Fail closed: Require valid CRON_SECRET configuration and match
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : null;
+    const isAuthorized = cronSecret && (
+      timingSafeMatch(secret, cronSecret) || 
+      timingSafeMatch(bearerToken, cronSecret)
+    );
+
+    if (!isAuthorized) {
       return NextResponse.json({ error: 'Unauthorized cron request.' }, { status: 401 });
     }
 

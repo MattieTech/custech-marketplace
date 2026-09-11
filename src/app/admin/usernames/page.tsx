@@ -11,12 +11,33 @@ export default async function AdminUsernamesPage() {
   await checkAdminAccess(['super_admin', 'moderator']);
   const adminClient = await createAdminClient();
 
-  const { data: requests } = await adminClient
+  const { data: rawRequests } = await adminClient
     .from('reports')
-    .select('*, profiles:reporter_id(display_name, referral_code, matric_number, avatar_url)')
+    .select('*')
     .eq('reported_type', 'username_change')
     .eq('status', 'pending')
     .order('created_at', { ascending: false });
+
+  const rawList = rawRequests || [];
+  const reporterIds = [...new Set(rawList.map((r: any) => r.reporter_id).filter(Boolean))];
+
+  let profileMap: Record<string, any> = {};
+  if (reporterIds.length > 0) {
+    const { data: profiles } = await adminClient
+      .from('profiles')
+      .select('user_id, display_name, referral_code, matric_number, avatar_url')
+      .in('user_id', reporterIds);
+
+    profileMap = (profiles || []).reduce((acc: any, p: any) => {
+      acc[p.user_id] = p;
+      return acc;
+    }, {});
+  }
+
+  const requests = rawList.map((req: any) => ({
+    ...req,
+    profiles: profileMap[req.reporter_id] || null,
+  }));
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">

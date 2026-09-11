@@ -48,12 +48,11 @@ export async function generateText(prompt: string, systemInstruction?: string): 
 3. Pay directly to verified caretakers or landlords listed on CUSTECH Marketplace with zero middleman fees.`;
     }
 
-    if (lower.includes('buy 2') || lower.includes('bundle') || lower.includes('discount') || lower.includes('coupon') || lower.includes('code')) {
-      return `Active Campus Promo Codes & Vouchers:
-- BLACK90: Up to 90% discount on select clearance items.
-- CAMPUS20: 20% discount on student services and electronics repairs.
-- FREE00: Claim 100% free items and textbook donations on /free-items.
-- FORCE2026: Join the CUSTECH Force Campus Ambassador program to earn commissions.`;
+    if (lower.includes('discount') || lower.includes('deal') || lower.includes('cheap') || lower.includes('coupon') || lower.includes('code')) {
+      return `CUSTECH Campus Deals & Savings:
+1. Visit /deals to explore verified clearance discounts and price drops across campus.
+2. Visit /free-items to claim 100% free textbook donations and student giveaways.
+3. Message sellers directly to arrange student-friendly pricing and bundle deals.`;
     }
 
     return `Welcome to CUSTECH Marketplace AI Support.

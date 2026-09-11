@@ -12,15 +12,35 @@ export default async function DisputesPage() {
   await checkAdminAccess(['super_admin', 'support_agent']);
   const adminClient = await createAdminClient();
   
-  const { data: disputes } = await adminClient
+  const { data: rawDisputes } = await adminClient
     .from('disputes')
     .select(`
       *,
-      transaction:transactions(amount, reference),
-      creator:profiles!disputes_creator_id_fkey(display_name)
+      transaction:transactions(amount, reference)
     `)
     .in('status', ['open', 'under_review'])
     .order('created_at', { ascending: false });
+
+  const rawList = rawDisputes || [];
+  const openerIds = [...new Set(rawList.map((d: any) => d.opened_by).filter(Boolean))];
+
+  let profileMap: Record<string, any> = {};
+  if (openerIds.length > 0) {
+    const { data: profiles } = await adminClient
+      .from('profiles')
+      .select('user_id, display_name')
+      .in('user_id', openerIds);
+
+    profileMap = (profiles || []).reduce((acc: any, p: any) => {
+      acc[p.user_id] = p;
+      return acc;
+    }, {});
+  }
+
+  const disputes = rawList.map((d: any) => ({
+    ...d,
+    creator: profileMap[d.opened_by] || { display_name: 'Campus Student' }
+  }));
 
   return (
     <div className="space-y-6">

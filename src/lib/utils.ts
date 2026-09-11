@@ -70,3 +70,17 @@ export function formatCompactNumber(num: number): string {
     maximumFractionDigits: 1
   }).format(num)
 }
+
+export function sanitizeRedirectPath(path: string | null | undefined, fallback: string = '/dashboard'): string {
+  if (!path || typeof path !== 'string') return fallback
+  const trimmed = path.trim()
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.startsWith('/\\') && !trimmed.includes('://')) {
+    return trimmed
+  }
+  return fallback
+}
+
+export function sanitizeSearchQuery(query: string | null | undefined): string {
+  if (!query || typeof query !== 'string') return ''
+  return query.replace(/[^a-zA-Z0-9\s_-]/g, '').trim().slice(0, 100)
+}

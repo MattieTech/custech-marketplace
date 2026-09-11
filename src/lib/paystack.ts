@@ -83,11 +83,22 @@ export async function verifyTransaction(reference: string): Promise<VerifyTransa
 }
 
 export async function verifyWebhookSignature(body: string, signature: string): Promise<boolean> {
+  if (!signature || !PAYSTACK_SECRET_KEY) {
+    return false
+  }
+
   const hash = crypto
     .createHmac('sha512', PAYSTACK_SECRET_KEY)
     .update(body)
     .digest('hex')
-  
-  return hash === signature
+
+  const hashBuffer = Buffer.from(hash, 'utf8')
+  const sigBuffer = Buffer.from(signature, 'utf8')
+
+  if (hashBuffer.length !== sigBuffer.length) {
+    return false
+  }
+
+  return crypto.timingSafeEqual(hashBuffer, sigBuffer)
 }
 

@@ -38,12 +38,18 @@ export async function POST(request: Request) {
       listingsQuery = listingsQuery.lte('price', Math.round(analysis.maxPriceNaira * 100));
     }
 
-    // Build search filter using keywords
+    // Build search filter using sanitized keywords to prevent PostgREST filter injection
     if (analysis.keywords && analysis.keywords.length > 0) {
-      const orFilters = analysis.keywords
-        .map(kw => `title.ilike.%${kw}%,description.ilike.%${kw}%`)
-        .join(',');
-      listingsQuery = listingsQuery.or(orFilters);
+      const sanitized = analysis.keywords
+        .map(kw => kw.replace(/[^a-zA-Z0-9\s]/g, '').trim())
+        .filter(kw => kw.length > 0);
+
+      if (sanitized.length > 0) {
+        const orFilters = sanitized
+          .map(kw => `title.ilike.%${kw}%,description.ilike.%${kw}%`)
+          .join(',');
+        listingsQuery = listingsQuery.or(orFilters);
+      }
     }
 
     const { data: listings, error } = await listingsQuery;

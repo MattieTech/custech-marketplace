@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 
 export type AdminRole = 'super_admin' | 'moderator' | 'finance_admin' | 'verification_officer' | 'support_agent';
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'matthewaliu001@gmail.com')
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
   .split(',')
   .map(e => e.trim().toLowerCase())
   .filter(Boolean);

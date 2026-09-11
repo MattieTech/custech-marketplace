@@ -32,34 +32,34 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold tracking-wider uppercase mb-4 text-gray-300">Marketplace</h3>
             <ul className="space-y-3">
-              <li><Link href="/marketplace" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Buy & Sell</Link></li>
-              <li><Link href="/services" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Services</Link></li>
-              <li><Link href="/housing" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Housing</Link></li>
-              <li><Link href="/businesses" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Businesses</Link></li>
-              <li><Link href="/marketplace?category=deals" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Campus Deals</Link></li>
+              <li><Link href="/marketplace" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Buy & Sell Items</Link></li>
+              <li><Link href="/services" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Student Services</Link></li>
+              <li><Link href="/housing" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Hostels & Lodges</Link></li>
+              <li><Link href="/businesses" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Campus Businesses</Link></li>
+              <li><Link href="/deals" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Campus Deals & Discounts</Link></li>
+              <li><Link href="/free-items" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Free Donations (₦0)</Link></li>
             </ul>
           </div>
 
           {/* Column 3 */}
           <div>
-            <h3 className="text-sm font-semibold tracking-wider uppercase mb-4 text-gray-300">Support</h3>
+            <h3 className="text-sm font-semibold tracking-wider uppercase mb-4 text-gray-300">Support & Safety</h3>
             <ul className="space-y-3">
-              <li><Link href="/trust" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Trust Center</Link></li>
-              <li><Link href="/help" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Help & FAQ</Link></li>
-              <li><Link href="/safety" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Safety Tips</Link></li>
-              <li><Link href="/report" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Report Issue</Link></li>
-              <li><Link href="/contact" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Contact Us</Link></li>
+              <li><Link href="/trust" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Trust & Verification Center</Link></li>
+              <li><Link href="/safety" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Student Safety Guide</Link></li>
+              <li><Link href="/scam-check" className="text-sm text-gray-400 hover:text-green-400 transition-colors">ScamCheck Detector</Link></li>
+              <li><Link href="/dashboard/disputes" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Dispute Resolution Desk</Link></li>
             </ul>
           </div>
 
           {/* Column 4 */}
           <div>
-            <h3 className="text-sm font-semibold tracking-wider uppercase mb-4 text-gray-300">Legal</h3>
+            <h3 className="text-sm font-semibold tracking-wider uppercase mb-4 text-gray-300">Legal & Policies</h3>
             <ul className="space-y-3">
               <li><Link href="/terms" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Terms of Service</Link></li>
               <li><Link href="/privacy" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/guidelines" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Community Guidelines</Link></li>
-              <li><Link href="/cookies" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Cookie Policy</Link></li>
+              <li><Link href="/community-guidelines" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Community Guidelines</Link></li>
+              <li><Link href="/refund-policy" className="text-sm text-gray-400 hover:text-green-400 transition-colors">Refund & Escrow Policy</Link></li>
             </ul>
           </div>
         </div>

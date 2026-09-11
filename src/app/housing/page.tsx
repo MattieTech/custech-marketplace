@@ -5,6 +5,7 @@ import { HousingCard, HousingProperty } from '@/components/housing/housing-card'
 import { createClient } from '@/lib/supabase/server';
 import { Search, Home, ShieldCheck, MapPin, SlidersHorizontal, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { sanitizeSearchQuery } from '@/lib/utils';
 
 export const metadata = {
   title: 'Hostels & Housing - CUSTECH Marketplace',
@@ -18,7 +19,7 @@ export default async function HousingPage({
 }) {
   const resolvedParams = await searchParams;
   const activeType = resolvedParams?.type || 'all';
-  const query = (resolvedParams?.q || '').toLowerCase().trim();
+  const query = sanitizeSearchQuery(resolvedParams?.q);
 
   let properties: HousingProperty[] = [];
 

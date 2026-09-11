@@ -10,16 +10,41 @@ export default async function TransactionsPage() {
   await checkAdminAccess(['super_admin', 'finance_admin']);
   const adminClient = await createAdminClient();
   
-  const { data: transactions } = await adminClient
+  const { data: rawTransactions } = await adminClient
     .from('transactions')
     .select(`
       *,
-      buyer:profiles!transactions_buyer_id_fkey(display_name),
-      seller:profiles!transactions_seller_id_fkey(display_name),
-      listing:listings!transactions_listing_id_fkey(title)
+      listing:listings(title)
     `)
     .order('created_at', { ascending: false })
     .limit(50);
+
+  const rawList = rawTransactions || [];
+  const userIds = [
+    ...new Set([
+      ...rawList.map((t: any) => t.buyer_id),
+      ...rawList.map((t: any) => t.seller_id)
+    ].filter(Boolean))
+  ];
+
+  let profileMap: Record<string, any> = {};
+  if (userIds.length > 0) {
+    const { data: profiles } = await adminClient
+      .from('profiles')
+      .select('user_id, display_name')
+      .in('user_id', userIds);
+
+    profileMap = (profiles || []).reduce((acc: any, p: any) => {
+      acc[p.user_id] = p;
+      return acc;
+    }, {});
+  }
+
+  const transactions = rawList.map((tx: any) => ({
+    ...tx,
+    buyer: profileMap[tx.buyer_id] || { display_name: 'Buyer' },
+    seller: profileMap[tx.seller_id] || { display_name: 'Seller' },
+  }));
 
   const getStatusBadge = (status: string) => {
     switch(status) {

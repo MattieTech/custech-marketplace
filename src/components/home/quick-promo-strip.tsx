@@ -40,11 +40,13 @@ export function QuickPromoStrip() {
     },
     {
       id: 'call-to-order',
-      title: 'Call to Order',
-      href: 'https://wa.me/2348000000000?text=Hello%20CUSTECH%20Marketplace%20Support%2C%20I%20want%20to%20place%20an%20order',
+      title: 'Order Helpdesk',
+      badge: 'Help Desk',
+      href: '#support',
       gradient: 'from-rose-500 via-pink-500 to-rose-600',
       borderGlow: 'hover:shadow-rose-500/25',
       icon: CallToOrderIcon,
+      isAiTrigger: true,
     },
     {
       id: 'custech-force',

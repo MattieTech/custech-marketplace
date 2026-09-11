@@ -26,18 +26,26 @@ export async function linkNewUserReferral({
     const admin = await createAdminClient();
     const cleanUsername = username.trim().toLowerCase();
 
-    // 1. Ensure profile has the chosen username as referral_code
+    // 1. Ensure profile has the chosen username as referral_code and username
+    const updatePayload: Record<string, any> = {
+      referral_code: cleanUsername,
+      display_name: displayName.trim(),
+    };
+
     const { error: profileError } = await admin
       .from('profiles')
       .update({
-        referral_code: cleanUsername,
-        display_name: displayName.trim(),
+        ...updatePayload,
         username: cleanUsername
       })
       .eq('user_id', userId);
 
     if (profileError) {
-      console.error('Error updating user profile referral code:', profileError);
+      console.warn('Profile update with username warning, retrying base payload:', profileError.message);
+      await admin
+        .from('profiles')
+        .update(updatePayload)
+        .eq('user_id', userId);
     }
 
     // 2. If referrer code provided, link referral
@@ -105,14 +113,24 @@ export async function registerUserAction(input: RegisterUserInput) {
 
     const admin = await createAdminClient();
 
-    // Check if username is already taken in profiles
-    const { data: existingProfile } = await admin
+    // Check if username is already taken in profiles (checks referral_code and username)
+    const { data: existingByRef } = await admin
       .from('profiles')
       .select('id')
-      .or(`username.eq.${username},referral_code.eq.${username}`)
+      .ilike('referral_code', username)
       .maybeSingle();
 
-    if (existingProfile) {
+    if (existingByRef) {
+      return { success: false, error: 'Username is already in use. Please choose another.' };
+    }
+
+    const { data: existingByCol } = await admin
+      .from('profiles')
+      .select('id')
+      .ilike('username', username)
+      .maybeSingle();
+
+    if (existingByCol) {
       return { success: false, error: 'Username is already in use. Please choose another.' };
     }
 

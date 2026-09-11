@@ -14,11 +14,30 @@ export default async function VerificationPage() {
   const adminClient = await createAdminClient();
   
   // Fetch pending verifications
-  const { data: requests } = await adminClient
+  const { data: rawRequests } = await adminClient
     .from('verification_requests')
     .select('*, profiles:user_id(display_name, avatar_url, matric_number, referral_code)')
     .in('verification_status', ['under_review', 'paid', 'pending_payment'])
     .order('created_at', { ascending: false });
+
+  const requests = await Promise.all(
+    (rawRequests || []).map(async (req: any) => {
+      let documentUrl = req.id_document_path;
+      if (documentUrl && !documentUrl.startsWith('http://') && !documentUrl.startsWith('https://')) {
+        const cleanPath = documentUrl.replace(/^verification-documents\//, '');
+        const { data: signedData } = await adminClient.storage
+          .from('verification-documents')
+          .createSignedUrl(cleanPath, 3600);
+        if (signedData?.signedUrl) {
+          documentUrl = signedData.signedUrl;
+        }
+      }
+      return {
+        ...req,
+        signed_document_url: documentUrl,
+      };
+    })
+  );
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
@@ -93,7 +112,7 @@ export default async function VerificationPage() {
                   {request.id_document_path && (
                     <div className="mb-4">
                       <Button variant="outline" size="sm" className="w-full text-xs font-semibold rounded-xl bg-slate-50" asChild>
-                        <a href={request.id_document_path} target="_blank" rel="noopener noreferrer">
+                        <a href={request.signed_document_url || request.id_document_path} target="_blank" rel="noopener noreferrer">
                           <FileText className="h-3.5 w-3.5 mr-1.5 text-slate-500" /> View Uploaded Student ID
                         </a>
                       </Button>

@@ -31,11 +31,11 @@ export function ListingCard({ listing }: ListingCardProps) {
   // Format condition label
   const conditionLabel = listing.condition ? listing.condition.replace('_', ' ') : 'Good';
 
-  // Format relative views / date
-  const viewCount = listing.view_count || listing.views || 48;
-  const completedTx = listing.completed_transactions || 12;
-  const ratingScore = listing.rating || 4.8;
-  const reviewCount = listing.reviews_count || 14;
+  // Format genuine seller and listing metrics (NO fake fallbacks)
+  const viewCount = listing.view_count || listing.views || 0;
+  const completedTx = seller?.completed_transactions ?? 0;
+  const ratingScore = Number(seller?.rating_avg || 0).toFixed(1);
+  const reviewCount = seller?.rating_count ?? 0;
 
   return (
     <Link href={`/marketplace/${listing.id}`} className="group block h-full select-none">
@@ -113,16 +113,24 @@ export function ListingCard({ listing }: ListingCardProps) {
 
             {/* Rating & Completed Transactions */}
             <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-1.5">
-              <div className="flex items-center gap-0.5 font-bold text-amber-500">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span>{ratingScore}</span>
-                <span className="text-slate-400 font-normal">({reviewCount})</span>
-              </div>
-              <span className="text-slate-300">•</span>
-              <div className="flex items-center gap-1 text-emerald-700 font-medium truncate">
-                <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
-                <span className="truncate">{completedTx} completed</span>
-              </div>
+              {reviewCount > 0 ? (
+                <div className="flex items-center gap-0.5 font-bold text-amber-500">
+                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                  <span>{ratingScore}</span>
+                  <span className="text-slate-400 font-normal">({reviewCount})</span>
+                </div>
+              ) : (
+                <span className="text-slate-400 font-medium">Campus Seller</span>
+              )}
+              {completedTx > 0 && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <div className="flex items-center gap-1 text-emerald-700 font-medium truncate">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                    <span className="truncate">{completedTx} sold</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Location & Views Row */}

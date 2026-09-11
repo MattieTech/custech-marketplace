@@ -220,11 +220,12 @@ export async function sendP2PTransfer(
     const reference = `P2P-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const transferDesc = description?.trim() || 'P2P student transfer';
 
-    // Call atomic RPC
+    // Call atomic RPC with amount in Kobo
+    const amountKobo = Math.round(amountNaira * 100);
     const { data: rpcResult, error: rpcError } = await adminClient.rpc('process_wallet_transfer', {
       p_sender_id: user.id,
       p_recipient_id: recipientId,
-      p_amount: Math.round(amountNaira),
+      p_amount: amountKobo,
       p_reference: reference,
       p_description: transferDesc,
     });
@@ -325,44 +326,64 @@ export async function requestWithdrawal(
       };
     }
 
-    // Check wallet balance
-    const { data: wallet } = await adminClient
-      .from('wallets')
-      .select('id, balance')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!wallet || Number(wallet.balance) < amountNaira) {
-      return { success: false, error: 'Insufficient wallet balance for this withdrawal amount.' };
-    }
-
-    const newBalance = Number(wallet.balance) - amountNaira;
+    const amountKobo = Math.round(amountNaira * 100);
     const reference = `WDR-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const description = `Withdrawal to ${profile.bank_name} (${profile.account_number})`;
+    const withdrawalMetadata = {
+      bank_name: profile.bank_name,
+      account_number: profile.account_number,
+      account_name: profile.account_name,
+      amount_naira: amountNaira,
+    };
 
-    // Debit wallet
-    await adminClient
-      .from('wallets')
-      .update({ balance: newBalance, updated_at: new Date().toISOString() })
-      .eq('id', wallet.id);
+    // 1. Try atomic PostgreSQL RPC with row-level locking
+    const { data: rpcRes, error: rpcErr } = await adminClient.rpc('request_wallet_withdrawal', {
+      p_user_id: user.id,
+      p_amount_kobo: amountKobo,
+      p_reference: reference,
+      p_description: description,
+      p_metadata: withdrawalMetadata,
+    });
 
-    // Record pending withdrawal transaction
-    await adminClient
-      .from('wallet_transactions')
-      .insert({
-        wallet_id: wallet.id,
-        user_id: user.id,
-        type: 'withdrawal',
-        amount: -amountNaira,
-        balance_after: Math.round(newBalance),
-        reference,
-        description: `Withdrawal to ${profile.bank_name} (${profile.account_number})`,
-        status: 'pending',
-        metadata: {
-          bank_name: profile.bank_name,
-          account_number: profile.account_number,
-          account_name: profile.account_name,
-        },
-      });
+    if (rpcErr) {
+      console.warn('request_wallet_withdrawal RPC fallback:', rpcErr);
+
+      // Fallback check wallet balance
+      const { data: wallet } = await adminClient
+        .from('wallets')
+        .select('id, balance')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!wallet || Number(wallet.balance) < amountKobo) {
+        return { success: false, error: 'Insufficient wallet balance for this withdrawal amount.' };
+      }
+
+      const newBalanceKobo = Number(wallet.balance) - amountKobo;
+
+      // Debit wallet in Kobo
+      await adminClient
+        .from('wallets')
+        .update({ balance: newBalanceKobo, updated_at: new Date().toISOString() })
+        .eq('id', wallet.id);
+
+      // Record pending withdrawal transaction in Kobo
+      await adminClient
+        .from('wallet_transactions')
+        .insert({
+          wallet_id: wallet.id,
+          user_id: user.id,
+          type: 'withdrawal',
+          amount: -amountKobo,
+          balance_after: Math.round(newBalanceKobo),
+          reference,
+          description,
+          status: 'pending',
+          metadata: withdrawalMetadata,
+        });
+    } else if (!rpcRes?.success) {
+      return { success: false, error: rpcRes?.error || 'Withdrawal failed.' };
+    }
 
     // Notify student
     await adminClient.from('notifications').insert({
