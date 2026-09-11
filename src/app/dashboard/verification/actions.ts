@@ -1,8 +1,10 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { initializeTransaction } from '@/lib/paystack';
 import { VERIFICATION_FEE_KOBO } from '@/lib/constants';
+import { isUserAdmin } from '@/lib/admin';
+import { revalidatePath } from 'next/cache';
 
 export async function getVerificationStatus() {
   const supabase = await createClient();
@@ -15,11 +17,17 @@ export async function getVerificationStatus() {
   // First check profile
   const { data: profile } = await supabase
     .from('profiles')
-    .select('verification_status')
+    .select('verification_status, trust_level')
     .eq('user_id', user.id)
     .single();
 
-  if (profile?.verification_status === 'verified') return 'verified';
+  if (
+    profile?.verification_status === 'approved' || 
+    profile?.verification_status === 'verified' || 
+    profile?.trust_level === 'custech_verified'
+  ) {
+    return 'verified';
+  }
 
   // Then check latest request
   const { data: request } = await supabase
@@ -30,11 +38,86 @@ export async function getVerificationStatus() {
     .limit(1)
     .single();
 
+  if (request?.verification_status === 'approved' || request?.verification_status === 'verified') return 'verified';
   if (request?.verification_status === 'rejected') return 'rejected';
   if (request?.payment_status === 'success' || request?.verification_status === 'under_review') return 'under_review';
 
   return 'unverified';
 }
+
+/**
+ * Admin Instant Self-Verification (Fee Waived)
+ */
+export async function verifyAdminSelf() {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const admin = await isUserAdmin();
+    if (!admin) {
+      return { success: false, error: 'Only administrators can use the instant fee waiver.' };
+    }
+
+    const adminClient = await createAdminClient();
+
+    // 1. Update profiles table
+    await adminClient
+      .from('profiles')
+      .update({
+        verification_status: 'approved',
+        trust_level: 'custech_verified',
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.id);
+
+    // 2. Ensure super_admin role
+    await adminClient
+      .from('admin_roles')
+      .upsert({
+        user_id: user.id,
+        role: 'super_admin'
+      }, { onConflict: 'user_id,role' });
+
+    // 3. Record approved verification request with waived fee
+    await adminClient
+      .from('verification_requests')
+      .insert({
+        user_id: user.id,
+        verification_method: 'manual',
+        full_name: user.user_metadata?.full_name || 'Admin',
+        phone: 'Admin Account',
+        payment_status: 'success',
+        payment_amount: 0,
+        payment_reference: `WAIVED-ADMIN-${Date.now()}`,
+        verification_status: 'approved',
+        reviewed_at: new Date().toISOString(),
+        student_info: { role: 'super_admin', fee_waived: true }
+      });
+
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/verification');
+    revalidatePath('/profile');
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error: any) {
+    console.error('verifyAdminSelf error:', error);
+    return { success: false, error: error.message || 'Failed to verify admin account' };
+  }
+}
+
+export async function checkIsAdminUser() {
+  try {
+    return await isUserAdmin();
+  } catch {
+    return false;
+  }
+}
+
+
 
 export async function submitVerification(formData: FormData) {
   try {
@@ -169,6 +252,54 @@ export async function submitVerification(formData: FormData) {
       avatar_url: avatarUrl,
     };
 
+    // Check if user is an administrator - waive verification fee automatically
+    const admin = await isUserAdmin();
+    if (admin) {
+      const adminClient = await createAdminClient();
+
+      await adminClient
+        .from('profiles')
+        .update({
+          display_name: fullName || undefined,
+          avatar_url: avatarUrl || undefined,
+          phone: phoneNumber || undefined,
+          whatsapp_number: whatsappNumber || undefined,
+          matric_number: matricNumber || undefined,
+          department: department || undefined,
+          faculty: faculty || undefined,
+          academic_level: level || undefined,
+          hostel_address: hostelAddress || undefined,
+          verification_status: 'approved',
+          trust_level: 'custech_verified',
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      await adminClient
+        .from('verification_requests')
+        .insert({
+          user_id: user.id,
+          full_name: fullName,
+          phone: phoneNumber,
+          student_info: studentInfo,
+          id_document_path: documentPath || null,
+          payment_reference: `WAIVED-ADMIN-${Date.now()}`,
+          payment_status: 'success',
+          payment_amount: 0,
+          verification_status: 'approved',
+          reviewed_at: new Date().toISOString(),
+          rejection_reason: null
+        });
+
+      revalidatePath('/dashboard');
+      revalidatePath('/dashboard/verification');
+      revalidatePath('/profile');
+      return { 
+        success: true, 
+        autoVerified: true 
+      };
+    }
+
     const { error: dbError } = await supabase
       .from('verification_requests')
       .insert({
@@ -201,6 +332,7 @@ export async function submitVerification(formData: FormData) {
       },
       callback_url: `${siteUrl}/dashboard/verification/callback`
     });
+
 
     if (!paystackResponse || !paystackResponse.status) {
       return { success: false, error: 'Failed to connect to payment gateway. Please try again.' };

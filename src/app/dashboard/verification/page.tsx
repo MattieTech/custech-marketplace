@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { formatPrice } from '@/lib/utils';
 import { VERIFICATION_FEE_KOBO } from '@/lib/constants';
-import { submitVerification, getVerificationStatus } from './actions';
+import { submitVerification, getVerificationStatus, verifyAdminSelf, checkIsAdminUser } from './actions';
 import { toast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
 
@@ -31,10 +31,13 @@ type VerificationMethod = 'id_card' | 'manual';
 export default function VerificationPage() {
   const router = useRouter();
   const [status, setStatus] = useState<VerificationStatus | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminVerifying, setIsAdminVerifying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [method, setMethod] = useState<VerificationMethod>('id_card');
+
 
   // Mandatory Profile Picture (Required for BOTH methods)
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
@@ -62,8 +65,12 @@ export default function VerificationPage() {
   useEffect(() => {
     async function loadStatus() {
       try {
-        const currentStatus = await getVerificationStatus();
+        const [currentStatus, adminCheck] = await Promise.all([
+          getVerificationStatus(),
+          checkIsAdminUser()
+        ]);
         setStatus(currentStatus);
+        setIsAdmin(adminCheck);
       } catch (err) {
         console.error('Failed to load status', err);
       } finally {
@@ -72,6 +79,24 @@ export default function VerificationPage() {
     }
     loadStatus();
   }, []);
+
+  const handleAdminInstantVerify = async () => {
+    setIsAdminVerifying(true);
+    try {
+      const res = await verifyAdminSelf();
+      if (res.success) {
+        toast.success('Admin account verified successfully! Fee waived.', 'Instant Verification');
+        setStatus('verified');
+      } else {
+        toast.error(res.error || 'Failed to verify account');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error occurred during verification');
+    } finally {
+      setIsAdminVerifying(false);
+    }
+  };
+
 
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -203,8 +228,14 @@ export default function VerificationPage() {
         formData.append('document', documentFile);
       }
 
-      toast.info('Initializing secure Paystack checkout...');
+      toast.info(isAdmin ? 'Submitting admin verification...' : 'Initializing secure Paystack checkout...');
       const result = await submitVerification(formData);
+
+      if (result.success && (result as any).autoVerified) {
+        toast.success('Admin account verified successfully! Fee waived.', 'Verified');
+        setStatus('verified');
+        return;
+      }
 
       if (result.success && result.authorization_url) {
         toast.success('Redirecting to Paystack for payment...', 'Payment Initialized');
@@ -213,6 +244,7 @@ export default function VerificationPage() {
         setError(result.error || 'Something went wrong.');
         toast.error(result.error || 'Failed to initialize verification.');
       }
+
     } catch (err: any) {
       console.error(err);
       setError('An unexpected error occurred.');
@@ -268,6 +300,46 @@ export default function VerificationPage() {
           Join trusted CUSTECH sellers and service providers. Choose your preferred verification method below.
         </p>
       </div>
+
+      {/* Admin Instant Waiver Banner */}
+      {isAdmin && (
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-emerald-500/10 border border-amber-300 dark:border-amber-700/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-amber-600/30">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900">Administrator Account Detected</h3>
+                <span className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">Fee Waived</span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1 max-w-xl leading-relaxed">
+                As a CUSTECH platform administrator, your verification fee (₦1,000) is 100% waived. You can verify your profile immediately without uploading documents or going through Paystack.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={handleAdminInstantVerify}
+            disabled={isAdminVerifying}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition-all"
+          >
+            {isAdminVerifying ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              <>
+                <Check className="w-3.5 h-3.5 mr-1.5" />
+                Verify Instantly (Fee Waived)
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
 
       {status === 'rejected' && (
         <Card className="p-4 bg-red-50 border-red-200">
@@ -590,24 +662,32 @@ export default function VerificationPage() {
             <div className="pt-4 flex justify-between">
               <Button variant="outline" onClick={handlePrevStep}>Back</Button>
               <Button onClick={handleNextStep} className="bg-green-600 hover:bg-green-700">
-                Proceed to Payment
+                {isAdmin ? 'Proceed (Fee Waived)' : 'Proceed to Payment'}
               </Button>
             </div>
           </div>
         )}
 
-        {/* STEP 3: Payment via Paystack */}
+        {/* STEP 3: Payment / Finalization */}
         {step === 3 && (
           <div className="space-y-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-1">Verification Processing Fee</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-1">
+              {isAdmin ? 'Administrator Verification Confirmation' : 'Verification Processing Fee'}
+            </h2>
             
-            <div className="bg-green-50 border border-green-200 rounded-xl p-5">
+            <div className={`border rounded-xl p-5 ${isAdmin ? 'bg-amber-50/70 border-amber-200' : 'bg-green-50 border-green-200'}`}>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-green-900">One-Time Verification Fee</span>
-                <span className="text-2xl font-bold text-green-800">{formatPrice(VERIFICATION_FEE_KOBO)}</span>
+                <span className={`text-sm font-medium ${isAdmin ? 'text-amber-900' : 'text-green-900'}`}>
+                  {isAdmin ? 'Administrator Fee Waiver' : 'One-Time Verification Fee'}
+                </span>
+                <span className={`text-2xl font-bold ${isAdmin ? 'text-emerald-700' : 'text-green-800'}`}>
+                  {isAdmin ? '₦0 (100% Waived)' : formatPrice(VERIFICATION_FEE_KOBO)}
+                </span>
               </div>
-              <p className="text-xs text-green-700">
-                Processed securely via Paystack with instant receipt. Covers manual ID verification, database lookup, and verified badge provisioning.
+              <p className={`text-xs ${isAdmin ? 'text-amber-800' : 'text-green-700'}`}>
+                {isAdmin 
+                  ? 'Official institutional admin privilege. No Paystack charge will be processed.'
+                  : 'Processed securely via Paystack with instant receipt. Covers manual ID verification, database lookup, and verified badge provisioning.'}
               </p>
             </div>
 
@@ -632,10 +712,12 @@ export default function VerificationPage() {
               <Button 
                 onClick={handleSubmit} 
                 disabled={isSubmitting} 
-                className="bg-green-600 hover:bg-green-700 min-w-[170px]"
+                className={`${isAdmin ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-green-600 hover:bg-green-700'} min-w-[170px]`}
               >
                 {isSubmitting ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Connecting...</>
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+                ) : isAdmin ? (
+                  <><Check className="w-4 h-4 mr-2" /> Complete Admin Verification (Free)</>
                 ) : (
                   <><CreditCard className="w-4 h-4 mr-2" /> Pay ₦1,000 via Paystack</>
                 )}
@@ -643,6 +725,7 @@ export default function VerificationPage() {
             </div>
           </div>
         )}
+
       </Card>
     </div>
   );
