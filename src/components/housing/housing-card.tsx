@@ -173,7 +173,7 @@ export function HousingCard({ property }: HousingCardProps) {
             <span className="text-slate-300">•</span>
             <span className="flex items-center gap-1">
               <Eye className="w-3.5 h-3.5 text-slate-400" />
-              <span>{property.views} views</span>
+              <span>{(property as any).view_count ?? property.views ?? 0} views</span>
             </span>
           </div>
 

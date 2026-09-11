@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { PageContainer } from '@/components/layout/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,14 +30,14 @@ export default async function AnalyticsPage() {
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', user.id)
-    .single();
+    .eq('user_id', user.id)
+    .maybeSingle();
 
-  // Fetch user's listings
+  // Fetch user's listings (supporting both seller_id and user_id columns)
   const { data: listings } = await supabase
     .from('listings')
-    .select('id, title, price, listing_type, status, views, created_at')
-    .eq('seller_id', user.id);
+    .select('id, title, price, listing_type, status, view_count, created_at')
+    .or(`seller_id.eq.${user.id},user_id.eq.${user.id}`);
 
   // Fetch user's services
   const { data: services } = await supabase
@@ -60,7 +60,7 @@ export default async function AnalyticsPage() {
   const productListings = listings?.filter((l: any) => l.listing_type === 'product') || [];
   const activeListingsCount = listings?.filter((l: any) => l.status === 'active').length || 0;
   const soldListingsCount = listings?.filter((l: any) => l.status === 'sold').length || 0;
-  const totalViews = listings?.reduce((sum: number, l: any) => sum + (l.views || 0), 0) || 0;
+  const totalViews = listings?.reduce((sum: number, l: any) => sum + (l.view_count || (l as any).views || 0), 0) || 0;
 
   // Conversion rate (rough estimate: sold / active + sold)
   const totalFinished = activeListingsCount + soldListingsCount;
@@ -210,7 +210,7 @@ export default async function AnalyticsPage() {
                         <td className="px-4 py-3 font-medium text-gray-900">{item.title}</td>
                         <td className="px-4 py-3 capitalize text-gray-600">{item.listing_type}</td>
                         <td className="px-4 py-3 text-green-700 font-semibold">{formatPrice(item.price)}</td>
-                        <td className="px-4 py-3 text-gray-600">{item.views || 0}</td>
+                        <td className="px-4 py-3 text-gray-600">{item.view_count || item.views || 0}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
                             item.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'

@@ -20,17 +20,17 @@ export default async function DashboardPage() {
     recentListingsRes,
   ] = await Promise.all([
     supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
-    supabase.from('listings').select('id, views, status').eq('user_id', user.id),
+    supabase.from('listings').select('id, view_count, status').or(`user_id.eq.${user.id},seller_id.eq.${user.id}`),
     supabase.from('escrow_orders').select('id, status').or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`),
-    supabase.from('listings').select('id, title, price, images, created_at, status').eq('user_id', user.id).order('created_at', { ascending: false }).limit(4)
+    supabase.from('listings').select('id, title, price, listing_images(url), created_at, status').or(`user_id.eq.${user.id},seller_id.eq.${user.id}`).order('created_at', { ascending: false }).limit(4)
   ]);
 
   const profile = profileRes.data;
   const displayName = profile?.display_name || user.email?.split('@')[0] || 'Student'
-  const isVerified = profile?.is_verified || false
+  const isVerified = profile?.verification_status === 'approved' || profile?.is_verified || false
 
   const activeListingsCount = listingsRes.data?.filter(l => l.status === 'active').length || 0;
-  const totalViewsCount = listingsRes.data?.reduce((acc, l) => acc + (l.views || 0), 0) || 0;
+  const totalViewsCount = listingsRes.data?.reduce((acc, l) => acc + (l.view_count || (l as any).views || 0), 0) || 0;
   const completedOrdersCount = escrowOrdersRes.data?.filter(o => o.status === 'completed').length || 0;
   const activeOrdersCount = escrowOrdersRes.data?.filter(o => ['funded', 'in_transit', 'delivered'].includes(o.status)).length || 0;
 
@@ -128,8 +128,8 @@ export default async function DashboardPage() {
               <Link key={item.id} href={`/marketplace/${item.id}`} className="group block">
                 <Card className="overflow-hidden border-slate-200/90 rounded-2xl bg-white shadow-2xs group-hover:shadow-md transition-all">
                   <div className="aspect-video w-full bg-slate-100 relative overflow-hidden">
-                    {item.images && item.images[0] ? (
-                      <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    {item.listing_images?.[0]?.url ? (
+                      <img src={item.listing_images[0].url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300">
                         <ShoppingBag className="w-8 h-8" />

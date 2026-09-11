@@ -24,12 +24,11 @@ export default async function SavedListingsPage() {
         id,
         title,
         price,
-        images,
-        category,
         listing_type,
         status,
-        views,
-        created_at
+        view_count,
+        created_at,
+        listing_images (url)
       )
     `)
     .eq('user_id', user.id)
@@ -65,9 +64,9 @@ export default async function SavedListingsPage() {
               <Link key={saved.id} href={`/marketplace/${item.id}`} className="group block">
                 <Card className="rounded-3xl border-slate-200/90 bg-white overflow-hidden shadow-xs group-hover:shadow-md transition-all">
                   <div className="aspect-video w-full bg-slate-100 relative overflow-hidden">
-                    {item.images && item.images[0] ? (
+                    {(item.listing_images?.[0]?.url || item.images?.[0]) ? (
                       <img
-                        src={item.images[0]}
+                        src={item.listing_images?.[0]?.url || item.images[0]}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -98,7 +97,7 @@ export default async function SavedListingsPage() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Eye className="w-3 h-3" />
-                        <span>{item.views || 0} views</span>
+                        <span>{item.view_count || item.views || 0} views</span>
                       </span>
                     </div>
                   </CardContent>

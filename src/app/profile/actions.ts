@@ -3,7 +3,45 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export async function toggleFollowUser(targetUserId: string) {
+/**
+ * Safely resolves an arbitrary target string (UUID, username, referral code)
+ * into a valid auth user_id to prevent Postgres 22P02 UUID syntax errors.
+ */
+async function resolveTargetUserId(
+  client: any, 
+  rawInput: string
+): Promise<{ resolvedId: string; profile: any | null }> {
+  if (!rawInput) return { resolvedId: rawInput, profile: null };
+
+  const cleanInput = decodeURIComponent(rawInput).replace(/^@/, '').trim();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanInput);
+
+  let query = client
+    .from('profiles')
+    .select('user_id, id, display_name, referral_code, username, followers_count, following_count');
+
+  if (isUuid) {
+    query = query.or(`user_id.eq.${cleanInput},id.eq.${cleanInput}`);
+  } else {
+    const safe = cleanInput.replace(/[^a-zA-Z0-9_\-\s]/g, '').trim();
+    if (!safe) return { resolvedId: cleanInput, profile: null };
+    query = query.or(`referral_code.ilike.${safe},username.ilike.${safe},display_name.ilike.${safe}`);
+  }
+
+  const { data: profile } = await query.maybeSingle();
+  return {
+    resolvedId: profile?.user_id || cleanInput,
+    profile: profile || null,
+  };
+}
+
+export async function toggleFollowUser(targetUserId: string): Promise<{
+  success: boolean;
+  isFollowing: boolean;
+  followersCount: number;
+  followingCount: number;
+  message: string;
+}> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -13,23 +51,18 @@ export async function toggleFollowUser(targetUserId: string) {
 
   const admin = await createAdminClient();
 
-  // Resolve targetUserId to valid auth user_id if profiles.id or username was passed
-  let resolvedTargetId = targetUserId;
-  const { data: targetProfile } = await admin
-    .from('profiles')
-    .select('user_id, id, display_name')
-    .or(`user_id.eq.${targetUserId},id.eq.${targetUserId},referral_code.ilike.${targetUserId}`)
-    .maybeSingle();
+  // Safely resolve targetUserId to valid auth user_id
+  const { resolvedId: resolvedTargetId, profile: targetProfile } = await resolveTargetUserId(admin, targetUserId);
 
-  if (targetProfile?.user_id) {
-    resolvedTargetId = targetProfile.user_id;
+  if (!resolvedTargetId) {
+    throw new Error('Student profile not found.');
   }
 
   if (user.id === resolvedTargetId) {
     throw new Error('You cannot follow yourself.');
   }
 
-  // Check user_follows table
+  // Check if a follow record already exists
   const { data: followRecord } = await admin
     .from('user_follows')
     .select('id')
@@ -40,38 +73,89 @@ export async function toggleFollowUser(targetUserId: string) {
   let isFollowing = false;
 
   if (followRecord) {
-    // UNFOLLOW
-    await admin
+    // UNFOLLOW ACTION
+    // Try authenticated client first, then fallback to admin
+    let { error: deleteError } = await supabase
       .from('user_follows')
       .delete()
       .eq('follower_id', user.id)
       .eq('following_id', resolvedTargetId);
 
+    if (deleteError) {
+      const adminRes = await admin
+        .from('user_follows')
+        .delete()
+        .eq('follower_id', user.id)
+        .eq('following_id', resolvedTargetId);
+      deleteError = adminRes.error;
+    }
+
+    if (deleteError) {
+      console.error('Error unfollowing user:', deleteError);
+      throw new Error('Failed to unfollow student: ' + deleteError.message);
+    }
+
+    // Direct fallback counter decrement on profiles in case triggers are not yet applied
+    try {
+      await admin.rpc('decrement_profile_counters', {
+        p_follower_id: user.id,
+        p_following_id: resolvedTargetId,
+      });
+    } catch {
+      // Non-critical fallback
+    }
+
     isFollowing = false;
   } else {
-    // FOLLOW
-    await admin
+    // FOLLOW ACTION
+    // Try authenticated client first (satisfies auth.uid() = follower_id), then admin
+    let { error: insertError } = await supabase
       .from('user_follows')
       .insert([{
         follower_id: user.id,
         following_id: resolvedTargetId,
       }]);
 
-    // Record notification for the user who was followed
-    const { data: myProfile } = await admin
-      .from('profiles')
-      .select('display_name, avatar_url')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    if (insertError) {
+      const adminRes = await admin
+        .from('user_follows')
+        .insert([{
+          follower_id: user.id,
+          following_id: resolvedTargetId,
+        }]);
+      insertError = adminRes.error;
+    }
 
+    if (insertError) {
+      console.error('Error following user:', insertError);
+      throw new Error('Failed to follow student: ' + insertError.message);
+    }
+
+    // Direct fallback counter increment on profiles
     try {
+      await admin.rpc('increment_profile_counters', {
+        p_follower_id: user.id,
+        p_following_id: resolvedTargetId,
+      });
+    } catch {
+      // Non-critical fallback
+    }
+
+    // Send in-app notification to the student who was followed
+    try {
+      const { data: myProfile } = await admin
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
       await admin
         .from('notifications')
         .insert([{
           user_id: resolvedTargetId,
           type: 'user_follow',
           title: 'New Campus Follower',
-          body: (myProfile?.display_name || 'A student') + ' started following your profile.',
+          body: `${myProfile?.display_name || 'A student'} started following your campus profile.`,
           data: { follower_id: user.id },
           is_read: false,
         }]);
@@ -82,17 +166,39 @@ export async function toggleFollowUser(targetUserId: string) {
     isFollowing = true;
   }
 
-  // Revalidate profile pages
+  // Fetch updated, exact counts from the database
+  const [followersRes, followingRes] = await Promise.all([
+    admin.from('user_follows').select('id', { count: 'exact', head: true }).eq('following_id', resolvedTargetId),
+    admin.from('user_follows').select('id', { count: 'exact', head: true }).eq('follower_id', resolvedTargetId),
+  ]);
+
+  const followersCount = typeof followersRes.count === 'number' 
+    ? followersRes.count 
+    : (isFollowing ? 1 : 0);
+  const followingCount = typeof followingRes.count === 'number' 
+    ? followingRes.count 
+    : 0;
+
+  // Revalidate profile and user paths
   revalidatePath(`/profile/${targetUserId}`);
   revalidatePath(`/profile/${resolvedTargetId}`);
+  if (targetProfile?.referral_code) {
+    revalidatePath(`/user/${targetProfile.referral_code}`);
+  }
+  if (targetProfile?.username) {
+    revalidatePath(`/user/${targetProfile.username}`);
+  }
   revalidatePath('/dashboard/followers');
   revalidatePath('/dashboard/following');
 
   return {
+    success: true,
     isFollowing,
+    followersCount,
+    followingCount,
     message: isFollowing 
-      ? `You are now following ${targetProfile?.display_name || 'this user'}`
-      : `Unfollowed ${targetProfile?.display_name || 'this user'}`,
+      ? `You are now following ${targetProfile?.display_name || 'this student'}`
+      : `Unfollowed ${targetProfile?.display_name || 'this student'}`,
   };
 }
 
@@ -101,20 +207,10 @@ export async function getFollowStats(targetUserId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   const admin = await createAdminClient();
 
-  // Resolve targetUserId
-  let resolvedTargetId = targetUserId;
-  const { data: targetProfile } = await admin
-    .from('profiles')
-    .select('user_id')
-    .or(`user_id.eq.${targetUserId},id.eq.${targetUserId},referral_code.ilike.${targetUserId}`)
-    .maybeSingle();
+  const { resolvedId: resolvedTargetId, profile: targetProfile } = await resolveTargetUserId(admin, targetUserId);
 
-  if (targetProfile?.user_id) {
-    resolvedTargetId = targetProfile.user_id;
-  }
-
-  let followersCount = 0;
-  let followingCount = 0;
+  let followersCount = targetProfile?.followers_count || 0;
+  let followingCount = targetProfile?.following_count || 0;
   let isFollowing = false;
 
   try {
@@ -124,8 +220,12 @@ export async function getFollowStats(targetUserId: string) {
       user ? admin.from('user_follows').select('id').eq('follower_id', user.id).eq('following_id', resolvedTargetId).maybeSingle() : Promise.resolve({ data: null, error: null }),
     ]);
 
-    followersCount = followersRes.count || 0;
-    followingCount = followingRes.count || 0;
+    if (typeof followersRes.count === 'number') {
+      followersCount = followersRes.count;
+    }
+    if (typeof followingRes.count === 'number') {
+      followingCount = followingRes.count;
+    }
     isFollowing = !!checkRes?.data;
   } catch (err) {
     console.error('Error fetching follow stats:', err);
@@ -136,18 +236,7 @@ export async function getFollowStats(targetUserId: string) {
 
 export async function getFollowersAndFollowingUsers(targetUserId: string) {
   const admin = await createAdminClient();
-
-  // Resolve targetUserId
-  let resolvedTargetId = targetUserId;
-  const { data: targetProfile } = await admin
-    .from('profiles')
-    .select('user_id')
-    .or(`user_id.eq.${targetUserId},id.eq.${targetUserId},referral_code.ilike.${targetUserId}`)
-    .maybeSingle();
-
-  if (targetProfile?.user_id) {
-    resolvedTargetId = targetProfile.user_id;
-  }
+  const { resolvedId: resolvedTargetId } = await resolveTargetUserId(admin, targetUserId);
 
   let followersUsers: any[] = [];
   let followingUsers: any[] = [];
@@ -190,18 +279,11 @@ export async function getFollowersAndFollowingUsers(targetUserId: string) {
 }
 
 export async function getProfileStatistics(userId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const admin = await createAdminClient();
 
-  let resolvedUserId = userId;
-  const { data: prof } = await admin
-    .from('profiles')
-    .select('user_id, completed_transactions, trust_level, rating_avg, rating_count')
-    .or(`user_id.eq.${userId},id.eq.${userId},referral_code.ilike.${userId}`)
-    .maybeSingle();
-
-  if (prof?.user_id) {
-    resolvedUserId = prof.user_id;
-  }
+  const { resolvedId: resolvedUserId, profile: prof } = await resolveTargetUserId(admin, userId);
 
   // 1. Listings & view counts
   const { data: listings } = await admin
@@ -214,18 +296,36 @@ export async function getProfileStatistics(userId: string) {
   const totalViews = (listings || []).reduce((acc: number, curr: any) => acc + (curr.view_count || 0), 0);
   const totalLikes = (listings || []).reduce((acc: number, curr: any) => acc + (curr.likes_count || 0), 0);
 
-  // 2. Follow counts
-  const [followersRes, followingRes] = await Promise.all([
-    admin.from('user_follows').select('id', { count: 'exact', head: true }).eq('following_id', resolvedUserId),
-    admin.from('user_follows').select('id', { count: 'exact', head: true }).eq('follower_id', resolvedUserId),
-  ]);
+  // 2. Follow counts & check current user following status
+  let followersCount = prof?.followers_count || 0;
+  let followingCount = prof?.following_count || 0;
+  let isFollowing = false;
+
+  try {
+    const [followersRes, followingRes, checkRes] = await Promise.all([
+      admin.from('user_follows').select('id', { count: 'exact', head: true }).eq('following_id', resolvedUserId),
+      admin.from('user_follows').select('id', { count: 'exact', head: true }).eq('follower_id', resolvedUserId),
+      user ? admin.from('user_follows').select('id').eq('follower_id', user.id).eq('following_id', resolvedUserId).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    ]);
+
+    if (typeof followersRes.count === 'number') {
+      followersCount = followersRes.count;
+    }
+    if (typeof followingRes.count === 'number') {
+      followingCount = followingRes.count;
+    }
+    isFollowing = !!checkRes?.data;
+  } catch (err) {
+    console.error('Error fetching stats follow counts:', err);
+  }
 
   return {
     listingsCount,
     totalViews,
     totalLikes,
-    followersCount: followersRes.count || 0,
-    followingCount: followingRes.count || 0,
+    followersCount,
+    followingCount,
+    isFollowing,
     completedDeals: prof?.completed_transactions || 0,
     ratingAvg: Number(prof?.rating_avg || 5.0).toFixed(1),
     ratingCount: prof?.rating_count || 0,

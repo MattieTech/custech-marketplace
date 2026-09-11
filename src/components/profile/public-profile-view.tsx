@@ -45,6 +45,7 @@ interface PublicProfileViewProps {
     totalLikes?: number;
     followersCount?: number;
     followingCount?: number;
+    isFollowing?: boolean;
     completedDeals?: number;
   };
 }
@@ -158,6 +159,11 @@ export function PublicProfileView({
               <FollowActions 
                 targetUserId={profile.user_id || profile.id}
                 isOwnProfile={isOwnProfile}
+                initialStats={{
+                  followersCount: stats?.followersCount ?? profile.followers_count ?? 0,
+                  followingCount: stats?.followingCount ?? profile.following_count ?? 0,
+                  isFollowing: stats?.isFollowing ?? false,
+                }}
               />
 
               {isOwnProfile ? (

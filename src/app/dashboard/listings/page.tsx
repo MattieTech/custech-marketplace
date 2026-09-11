@@ -77,7 +77,7 @@ export default async function MyListingsPage() {
               
               <div className="flex items-center justify-between text-xs text-gray-500 mt-auto pt-3 border-t">
                 <span className="flex items-center">
-                  <Eye className="w-3.5 h-3.5 mr-1" /> {listing.views || 0} views
+                  <Eye className="w-3.5 h-3.5 mr-1" /> {listing.view_count || listing.views || 0} views
                 </span>
                 <span>{formatDate(listing.created_at)}</span>
               </div>

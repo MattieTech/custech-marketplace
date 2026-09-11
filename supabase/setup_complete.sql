@@ -64,6 +64,8 @@ CREATE TABLE IF NOT EXISTS profiles (
     completed_transactions INTEGER DEFAULT 0,
     referral_code TEXT UNIQUE,
     username TEXT UNIQUE,
+    followers_count INTEGER DEFAULT 0,
+    following_count INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -358,6 +360,20 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 20. USER FOLLOWS
+CREATE TABLE IF NOT EXISTS user_follows (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    follower_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    following_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT user_follows_no_self_follow CHECK (follower_id <> following_id),
+    CONSTRAINT user_follows_unique_pair UNIQUE (follower_id, following_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_follows_follower ON user_follows(follower_id);
+CREATE INDEX IF NOT EXISTS idx_user_follows_following ON user_follows(following_id);
+CREATE INDEX IF NOT EXISTS idx_user_follows_created ON user_follows(created_at DESC);
+
 -- ====================================================================
 -- 2. AUTOMATIC TRIGGERS & FUNCTIONS
 -- ====================================================================
@@ -578,6 +594,14 @@ CREATE POLICY "Deals are viewable by everyone" ON deals FOR SELECT USING (true);
 CREATE POLICY "Users can view own notifications" ON notifications FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own verification requests" ON verification_requests FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Admins can view verification requests" ON verification_requests FOR SELECT USING (is_admin(auth.uid()));
+
+ALTER TABLE user_follows ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read user_follows" ON user_follows FOR SELECT USING (true);
+CREATE POLICY "Users can follow others" ON user_follows FOR INSERT TO authenticated WITH CHECK (auth.uid() = follower_id);
+CREATE POLICY "Users can unfollow" ON user_follows FOR DELETE TO authenticated USING (auth.uid() = follower_id);
+CREATE POLICY "Service role full access on user_follows" ON user_follows FOR ALL TO service_role USING (true) WITH CHECK (true);
+GRANT ALL ON user_follows TO authenticated, service_role;
+GRANT SELECT ON user_follows TO anon;
 
 -- ====================================================================
 -- 4. STORAGE BUCKETS (Public & Private)

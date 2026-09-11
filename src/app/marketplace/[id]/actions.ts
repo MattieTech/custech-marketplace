@@ -42,7 +42,7 @@ export async function toggleSaveListing(listingId: string) {
 
   const admin = await createAdminClient();
 
-  const { data: existing } = await admin
+  const { data: existing } = await supabase
     .from('saved_listings')
     .select('id')
     .eq('user_id', user.id)
@@ -50,18 +50,26 @@ export async function toggleSaveListing(listingId: string) {
     .maybeSingle();
 
   if (existing) {
-    await admin
+    let { error: delErr } = await supabase
       .from('saved_listings')
       .delete()
       .eq('id', existing.id);
+
+    if (delErr) {
+      await admin.from('saved_listings').delete().eq('id', existing.id);
+    }
 
     revalidatePath(`/marketplace/${listingId}`);
     revalidatePath('/dashboard/saved');
     return { success: true, saved: false };
   } else {
-    await admin
+    let { error: insErr } = await supabase
       .from('saved_listings')
       .insert({ user_id: user.id, listing_id: listingId });
+
+    if (insErr) {
+      await admin.from('saved_listings').insert({ user_id: user.id, listing_id: listingId });
+    }
 
     revalidatePath(`/marketplace/${listingId}`);
     revalidatePath('/dashboard/saved');
@@ -76,7 +84,7 @@ export async function toggleLikeListing(listingId: string) {
 
   const admin = await createAdminClient();
 
-  const { data: existing } = await admin
+  const { data: existing } = await supabase
     .from('listing_likes')
     .select('id')
     .eq('user_id', user.id)
@@ -84,10 +92,14 @@ export async function toggleLikeListing(listingId: string) {
     .maybeSingle();
 
   if (existing) {
-    await admin
+    let { error: delErr } = await supabase
       .from('listing_likes')
       .delete()
       .eq('id', existing.id);
+
+    if (delErr) {
+      await admin.from('listing_likes').delete().eq('id', existing.id);
+    }
 
     // Get latest likes count
     const { count } = await admin
@@ -98,9 +110,13 @@ export async function toggleLikeListing(listingId: string) {
     revalidatePath(`/marketplace/${listingId}`);
     return { success: true, liked: false, count: count || 0 };
   } else {
-    await admin
+    let { error: insErr } = await supabase
       .from('listing_likes')
       .insert({ user_id: user.id, listing_id: listingId });
+
+    if (insErr) {
+      await admin.from('listing_likes').insert({ user_id: user.id, listing_id: listingId });
+    }
 
     const { count } = await admin
       .from('listing_likes')
@@ -108,7 +124,7 @@ export async function toggleLikeListing(listingId: string) {
       .eq('listing_id', listingId);
 
     revalidatePath(`/marketplace/${listingId}`);
-    return { success: true, liked: true, count: count || 1 };
+    return { success: true, liked: true, count: count || 0 };
   }
 }
 

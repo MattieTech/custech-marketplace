@@ -44,7 +44,16 @@ export function FollowActions({
   const [loadingList, setLoadingList] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch initial live stats
+  // Sync state if initialStats from server changes
+  useEffect(() => {
+    if (initialStats) {
+      if (typeof initialStats.isFollowing === 'boolean') setIsFollowing(initialStats.isFollowing);
+      if (typeof initialStats.followersCount === 'number') setFollowersCount(initialStats.followersCount);
+      if (typeof initialStats.followingCount === 'number') setFollowingCount(initialStats.followingCount);
+    }
+  }, [initialStats?.isFollowing, initialStats?.followersCount, initialStats?.followingCount]);
+
+  // Fetch initial live stats if not provided or to ensure fresh sync
   useEffect(() => {
     getFollowStats(targetUserId)
       .then((stats) => {
@@ -69,6 +78,12 @@ export function FollowActions({
     try {
       const res = await toggleFollowUser(targetUserId);
       setIsFollowing(res.isFollowing);
+      if (typeof res.followersCount === 'number') {
+        setFollowersCount(res.followersCount);
+      }
+      if (typeof res.followingCount === 'number') {
+        setFollowingCount(res.followingCount);
+      }
       toast.success(res.message);
     } catch (err: any) {
       // Revert on error
