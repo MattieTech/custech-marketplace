@@ -35,12 +35,33 @@ INSERT INTO wallets (user_id, balance, locked_balance)
 SELECT user_id, 0, 0 FROM profiles
 ON CONFLICT (user_id) DO NOTHING;
 
--- 2. WALLET TRANSACTIONS COLUMNS
-ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'completed' 
-  CHECK (status IN ('pending', 'completed', 'failed', 'reversed'));
+-- 2. WALLET TRANSACTIONS TABLE
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    wallet_id UUID REFERENCES wallets(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    recipient_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    type TEXT NOT NULL,
+    amount BIGINT NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'NGN',
+    balance_after BIGINT NOT NULL DEFAULT 0,
+    reference TEXT UNIQUE,
+    description TEXT,
+    status TEXT NOT NULL DEFAULT 'completed' CHECK (status IN ('pending', 'completed', 'failed', 'reversed')),
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user ON wallet_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_ref ON wallet_transactions(reference);
+
+-- Ensure all extended columns exist on wallet_transactions and relax type check for escrow
+ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS wallet_id UUID REFERENCES wallets(id) ON DELETE CASCADE;
 ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS sender_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS recipient_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'completed';
 ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';
+ALTER TABLE wallet_transactions DROP CONSTRAINT IF EXISTS wallet_transactions_type_check;
 
 -- 3. ESCROW ORDERS TABLE
 CREATE TABLE IF NOT EXISTS escrow_orders (
