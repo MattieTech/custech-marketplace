@@ -39,6 +39,7 @@ yarn-error.log*
 .env.production.local
 .env*.local
 .env*
+!.env.example
 
 # firebase
 .firebase/
