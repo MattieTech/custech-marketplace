@@ -36,6 +36,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { AISearchBar } from './ai-search-bar';
+import { PwaInstallHeaderButton } from '@/components/pwa/pwa-install-prompt';
 
 export function Header() {
   const router = useRouter();
@@ -117,7 +118,7 @@ export function Header() {
           </button>
 
           <Link href="/" className="flex items-center gap-2 active:scale-95 transition-transform">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 p-0.5 flex items-center justify-center border border-emerald-200">
+            <div className="relative w-8 h-8 rounded-lg bg-emerald-50 p-0.5 flex items-center justify-center border border-emerald-200 shadow-2xs">
               <Image
                 src="/logo.png"
                 alt="CUSTECH Marketplace"
@@ -126,6 +127,10 @@ export function Header() {
                 className="object-contain"
                 priority
               />
+              <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
             </div>
             <div className="flex items-center gap-1 leading-tight">
               <span className="text-base font-black text-emerald-700 tracking-tight">CUSTECH</span>
@@ -485,23 +490,33 @@ export function Header() {
       <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-xl h-16 hidden md:flex items-center shadow-xs select-none">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex justify-between items-center h-full">
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group active:scale-98 transition-transform">
-              <div className="w-9 h-9 rounded-2xl bg-emerald-50 p-1 flex items-center justify-center border border-emerald-200 group-hover:border-emerald-400 shadow-xs transition-all">
+            <Link href="/" className="flex items-center gap-3 group active:scale-98 transition-transform">
+              <div className="relative w-10 h-10 rounded-2xl bg-emerald-50 p-1 flex items-center justify-center border border-emerald-200 group-hover:border-emerald-400 shadow-xs transition-all">
                 <Image
                   src="/logo.png"
                   alt="CUSTECH Marketplace"
-                  width={30}
-                  height={30}
+                  width={32}
+                  height={32}
                   className="object-contain"
                   priority
                 />
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
               </div>
               <div className="flex flex-col">
-                <div className="flex items-center gap-1 leading-tight">
+                <div className="flex items-center gap-1.5 leading-tight">
                   <span className="text-lg font-black text-emerald-700 tracking-tight">CUSTECH</span>
                   <span className="text-lg font-bold text-slate-900 tracking-tight">Marketplace</span>
                 </div>
-                <span className="text-[9px] font-bold text-slate-400 tracking-[0.22em] uppercase">Official Campus Hub</span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[9px] font-bold text-slate-400 tracking-[0.2em] uppercase">Official Campus Hub</span>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-100/70 text-emerald-800 text-[9px] font-extrabold border border-emerald-200/50">
+                    <ShieldCheck className="w-2.5 h-2.5 text-emerald-600 animate-pulse" />
+                    <span>Protected</span>
+                  </span>
+                </div>
               </div>
             </Link>
             
@@ -538,6 +553,8 @@ export function Header() {
             <div className="w-36 lg:w-44 xl:w-52">
               <AISearchBar />
             </div>
+
+            <PwaInstallHeaderButton />
 
             {user ? (
               <div className="flex items-center gap-2">

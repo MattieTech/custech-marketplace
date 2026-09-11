@@ -13,10 +13,52 @@ import { ShareButton } from '@/components/marketplace/share-button';
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: item } = await supabase.from('listings').select('title, description').eq('id', id).maybeSingle();
+  const { data: item } = await supabase
+    .from('listings')
+    .select('title, description, price, location, listing_images(url)')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (!item) {
+    return {
+      title: 'Service Not Found | CUSTECH Services',
+      description: 'The requested student freelance service could not be found.',
+    };
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.com';
+  const pageUrl = `${siteUrl}/services/${id}`;
+  const images = (item.listing_images || []).map((img: any) => img.url).filter(Boolean);
+  const primaryImage = images[0] || `${siteUrl}/og-image.png`;
+  const formattedPrice = item.price ? `₦${formatPrice(item.price)}` : 'Contact for Quote';
+  const metaTitle = `${item.title} (${formattedPrice}) | CUSTECH Student Services`;
+  const metaDescription = item.description?.slice(0, 160) || `Hire student talent for ${item.title} on CUSTECH Marketplace. Verified campus freelancers in Osara.`;
+
   return {
-    title: item ? `${item.title} - CUSTECH Student Services` : 'Service Not Found',
-    description: item?.description?.slice(0, 160),
+    title: metaTitle,
+    description: metaDescription,
+    openGraph: {
+      title: metaTitle,
+      description: metaDescription,
+      url: pageUrl,
+      siteName: 'CUSTECH Student Services',
+      images: [
+        {
+          url: primaryImage,
+          width: 1200,
+          height: 630,
+          alt: item.title,
+        },
+      ],
+      type: 'website',
+      locale: 'en_NG',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: metaTitle,
+      description: metaDescription,
+      images: [primaryImage],
+    },
   };
 }
 

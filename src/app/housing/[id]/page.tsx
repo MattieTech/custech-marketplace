@@ -14,10 +14,52 @@ import { ShareButton } from '@/components/marketplace/share-button';
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: prop } = await supabase.from('listings').select('title, description').eq('id', id).maybeSingle();
+  const { data: prop } = await supabase
+    .from('listings')
+    .select('title, description, price, location, listing_images(url)')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (!prop) {
+    return {
+      title: 'Hostel Not Found | CUSTECH Lodges',
+      description: 'The requested student accommodation could not be found.',
+    };
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.com';
+  const pageUrl = `${siteUrl}/housing/${id}`;
+  const images = (prop.listing_images || []).map((img: any) => img.url).filter(Boolean);
+  const primaryImage = images[0] || `${siteUrl}/og-image.png`;
+  const formattedPrice = prop.price ? `₦${formatPrice(prop.price)}/year` : 'Rent negotiable';
+  const metaTitle = `${prop.title} (${formattedPrice}) | CUSTECH Lodges & Hostels`;
+  const metaDescription = prop.description?.slice(0, 160) || `Check out ${prop.title} in ${prop.location || 'Osara'}. Verified student housing near CUSTECH campus.`;
+
   return {
-    title: prop ? `${prop.title} - CUSTECH Hostels & Housing` : 'Accommodation Not Found',
-    description: prop?.description?.slice(0, 160),
+    title: metaTitle,
+    description: metaDescription,
+    openGraph: {
+      title: metaTitle,
+      description: metaDescription,
+      url: pageUrl,
+      siteName: 'CUSTECH Marketplace Housing',
+      images: [
+        {
+          url: primaryImage,
+          width: 1200,
+          height: 630,
+          alt: prop.title,
+        },
+      ],
+      type: 'website',
+      locale: 'en_NG',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: metaTitle,
+      description: metaDescription,
+      images: [primaryImage],
+    },
   };
 }
 

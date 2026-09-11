@@ -18,10 +18,52 @@ import { incrementViewCount, toggleSaveListing } from './actions';
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: listing } = await supabase.from('listings').select('title, description').eq('id', id).maybeSingle();
+  const { data: listing } = await supabase
+    .from('listings')
+    .select('title, description, price, location, listing_images(url)')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (!listing) {
+    return {
+      title: 'Item Not Found | CUSTECH Marketplace',
+      description: 'The requested campus listing could not be found.',
+    };
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.com';
+  const pageUrl = `${siteUrl}/marketplace/${id}`;
+  const images = (listing.listing_images || []).map((img: any) => img.url).filter(Boolean);
+  const primaryImage = images[0] || `${siteUrl}/og-image.png`;
+  const formattedPrice = listing.price ? `₦${formatPrice(listing.price)}` : 'Contact for Price';
+  const metaTitle = `${listing.title} (${formattedPrice}) | CUSTECH Marketplace`;
+  const metaDescription = listing.description?.slice(0, 160) || `Buy ${listing.title} on CUSTECH Marketplace. Verified student seller, safe campus pickup in Osara.`;
+
   return {
-    title: listing ? `${listing.title} - CUSTECH Marketplace` : 'Listing Not Found',
-    description: listing?.description?.slice(0, 160),
+    title: metaTitle,
+    description: metaDescription,
+    openGraph: {
+      title: metaTitle,
+      description: metaDescription,
+      url: pageUrl,
+      siteName: 'CUSTECH Marketplace',
+      images: [
+        {
+          url: primaryImage,
+          width: 1200,
+          height: 630,
+          alt: listing.title,
+        },
+      ],
+      type: 'website',
+      locale: 'en_NG',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: metaTitle,
+      description: metaDescription,
+      images: [primaryImage],
+    },
   };
 }
 
