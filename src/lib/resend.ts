@@ -336,7 +336,7 @@ export function generatePromotionalHtml({
   secondaryCtaText,
   secondaryCtaUrl,
 }: Omit<PromotionalEmailPayload, 'to' | 'subject'>) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://custech.market';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.vercel.app';
   const fullCtaUrl = ctaUrl.startsWith('http') ? ctaUrl : `${siteUrl}${ctaUrl}`;
   const fullSecondaryUrl = secondaryCtaUrl 
     ? (secondaryCtaUrl.startsWith('http') ? secondaryCtaUrl : `${siteUrl}${secondaryCtaUrl}`)
@@ -644,7 +644,7 @@ export async function sendWelcomeAndReferralFollowupEmail({
   username,
   referralCode,
 }: WelcomeReferralFollowupParams) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://custech.market';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.vercel.app';
   const cleanCode = referralCode || username || 'student';
   const referralLink = `${siteUrl}/register?ref=${cleanCode}`;
   const verificationUrl = `${siteUrl}/dashboard/verification`;

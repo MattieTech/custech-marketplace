@@ -320,7 +320,7 @@ export async function submitVerification(formData: FormData) {
 
     // 5. Initialize Paystack verification fee payment
     const email = user.email!;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://custechmarketplace.vercel.app';
     const paystackResponse = await initializeTransaction({
       email,
       amount: VERIFICATION_FEE_KOBO,

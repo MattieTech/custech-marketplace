@@ -2,6 +2,19 @@
 
 import { createAdminClient } from '@/lib/supabase/server';
 import { sendVerificationEmail } from '@/lib/resend';
+import { headers } from 'next/headers';
+
+async function getBaseUrl() {
+  try {
+    const headerList = await headers();
+    const host = headerList.get('x-forwarded-host') || headerList.get('host');
+    const proto = headerList.get('x-forwarded-proto') || 'https';
+    if (host && !host.includes('localhost')) {
+      return `${proto}://${host}`;
+    }
+  } catch {}
+  return process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.vercel.app';
+}
 
 export interface RegisterUserInput {
   displayName: string;
@@ -135,7 +148,7 @@ export async function registerUserAction(input: RegisterUserInput) {
     }
 
     // Determine site URL for callback redirection
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const siteUrl = await getBaseUrl();
     const redirectTo = `${siteUrl}/callback?next=/dashboard`;
 
     // 1. Generate signup confirmation link via Supabase Admin without sending Supabase email
@@ -216,7 +229,7 @@ export async function resendConfirmationEmailAction(email: string) {
     }
 
     const admin = await createAdminClient();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const siteUrl = await getBaseUrl();
     const redirectTo = `${siteUrl}/callback?next=/dashboard`;
 
     // Generate link for confirmation

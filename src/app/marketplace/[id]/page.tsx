@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.vercel.app';
   const pageUrl = `${siteUrl}/marketplace/${id}`;
   const images = (listing.listing_images || []).map((img: any) => img.url).filter(Boolean);
   const primaryImage = images[0] || `${siteUrl}/og-image.png`;

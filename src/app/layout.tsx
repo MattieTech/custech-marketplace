@@ -14,7 +14,7 @@ import { PwaInstallPrompt } from "@/components/pwa/pwa-install-prompt";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.vercel.app'),
   title: {
     default: "CUSTECH Marketplace - Buy, Sell & Connect Safely",
     template: "%s | CUSTECH Marketplace",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_NG",
-    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.com',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://custechmarketplace.vercel.app',
     siteName: "CUSTECH Marketplace",
     title: "CUSTECH Marketplace - Buy, Sell & Connect Safely",
     description: "The trusted campus marketplace for CUSTECH Osara students. Trade safely with verified student badges and campus escrow protection.",
