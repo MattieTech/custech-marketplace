@@ -42,7 +42,8 @@ export function Select({
   children,
   ...props
 }: SelectProps) {
-  const selectId = id || React.useId()
+  const generatedId = React.useId()
+  const selectId = id || generatedId
   const errorId = `${selectId}-error`
   const [open, setOpen] = React.useState(false)
   const [labelMap, setLabelMap] = React.useState<Record<string, string>>({})

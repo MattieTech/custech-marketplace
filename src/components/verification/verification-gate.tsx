@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ShieldAlert, ShieldCheck, ArrowRight, Lock, CheckCircle2, Clock } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CustechLogoLoader } from '@/components/ui/custech-loader';
 import { checkListingEligibility, EligibilityResult } from '@/app/dashboard/listings/actions';

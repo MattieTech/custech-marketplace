@@ -74,16 +74,18 @@ export function CustechLogoLoader({
   onCycleComplete,
 }: CustechLogoLoaderProps) {
   const [iteration, setIteration] = useState(0);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => 
+    typeof window !== 'undefined' 
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
+      : false
+  );
+  const isDarkMode = theme === 'dark';
 
-  // Detect accessibility prefers-reduced-motion
+  // Detect accessibility prefers-reduced-motion changes
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(motionMedia.matches);
-
     const handleMotionChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
@@ -91,15 +93,6 @@ export function CustechLogoLoader({
     motionMedia.addEventListener('change', handleMotionChange);
     return () => motionMedia.removeEventListener('change', handleMotionChange);
   }, []);
-
-  // Theme resolution: Always maintain full vivid brand colors (light mode) unless explicitly requested
-  useEffect(() => {
-    if (theme === 'dark') {
-      setIsDarkMode(true);
-    } else {
-      setIsDarkMode(false);
-    }
-  }, [theme]);
 
   // Adjust base timing by mode:
   // Splash: 8000ms (8.0s full choreographed cycle with hold)

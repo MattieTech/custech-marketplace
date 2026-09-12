@@ -6,8 +6,7 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogDescription,
-  DialogFooter 
+  DialogDescription
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +16,6 @@ import { formatPrice } from '@/lib/utils';
 import { toast } from '@/components/ui/toast';
 import { 
   Search, 
-  CheckCircle2, 
   AlertCircle, 
   ShieldCheck, 
   ArrowRight, 
@@ -138,7 +136,7 @@ export function P2PTransferModal({
                   <Search className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Enter the recipient's exact Referral Code or User ID to verify their identity before transferring.
+                  Enter the recipient&apos;s exact Referral Code or User ID to verify their identity before transferring.
                 </p>
               </div>
 

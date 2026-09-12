@@ -424,7 +424,7 @@ export function PublicProfileView({
                   </div>
                   {rev.comment && (
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      "{rev.comment}"
+                      &ldquo;{rev.comment}&rdquo;
                     </p>
                   )}
                 </Card>

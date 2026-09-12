@@ -21,12 +21,12 @@ export function SearchInput({
   ...props 
 }: SearchInputProps) {
   const [localValue, setLocalValue] = React.useState<string>((value || defaultValue || "").toString())
-  
-  React.useEffect(() => {
-    if (value !== undefined) {
-      setLocalValue(value.toString())
-    }
-  }, [value])
+  const [prevValue, setPrevValue] = React.useState(value)
+
+  if (value !== undefined && value !== prevValue) {
+    setPrevValue(value)
+    setLocalValue(value.toString())
+  }
 
   React.useEffect(() => {
     const timer = setTimeout(() => {

@@ -18,7 +18,6 @@ import { toast } from '@/components/ui/toast';
 import { 
   Building2, 
   AlertCircle, 
-  CheckCircle2, 
   Loader2, 
   ArrowUpRight, 
   Settings 
