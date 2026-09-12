@@ -195,8 +195,9 @@ export async function registerUserAction(input: RegisterUserInput) {
       userId,
       email,
       emailSent: sendResult.success,
+      verificationUrl,
       isMock: (sendResult as any).mock,
-      message: 'Account created! Verification email sent via Resend.'
+      message: 'Account created! Verification email sent.'
     };
   } catch (err: any) {
     console.error('[registerUserAction Error]:', err);
@@ -259,7 +260,7 @@ export async function resendConfirmationEmailAction(email: string) {
     return {
       success: true,
       emailSent: sendResult.success,
-      message: 'Confirmation email resent via Resend!'
+      message: 'Confirmation email resent! Please check your inbox and spam folder.'
     };
   } catch (err: any) {
     console.error('[resendConfirmationEmailAction Error]:', err);
