@@ -57,6 +57,11 @@ export async function sendEmailWithFallback({
         subject,
         html,
         text: text || subject,
+        replyTo: 'custechmarket@gmail.com',
+        headers: {
+          'X-Entity-Ref-ID': `custech-${Date.now()}`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
       });
       return { success: true, id: info.messageId, provider: 'smtp' };
     } catch (err: any) {
