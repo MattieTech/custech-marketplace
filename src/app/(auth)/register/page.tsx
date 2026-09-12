@@ -20,7 +20,6 @@ function RegisterForm() {
   const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [directLink, setDirectLink] = useState<string | null>(null);
 
   // Form inputs
   const [displayName, setDisplayName] = useState('');
@@ -167,10 +166,6 @@ function RegisterForm() {
         throw new Error(res.error || 'Registration failed.');
       }
 
-      if (res.verificationUrl) {
-        setDirectLink(res.verificationUrl);
-      }
-
       toast.success('Account created! Verification email sent.');
       setSuccess(true);
     } catch (err: any) {
@@ -215,24 +210,6 @@ function RegisterForm() {
           <p className="text-sm text-slate-600 max-w-sm">
             We sent a verification link to your email. Click the button in your email to confirm your account and open your dashboard.
           </p>
-
-          {directLink && (
-            <div className="w-full p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 text-left space-y-2.5">
-              <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
-                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Instant Campus Activation:</span>
-              </div>
-              <p className="text-xs text-emerald-700 leading-relaxed">
-                You can also activate your account directly right now without leaving this page:
-              </p>
-              <Button
-                onClick={() => window.location.assign(directLink)}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-sm shadow-emerald-600/20"
-              >
-                Instant Activate & Open Dashboard &rarr;
-              </Button>
-            </div>
-          )}
 
           <div className="w-full pt-2 space-y-2.5">
             <Button 
