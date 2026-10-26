@@ -56,7 +56,7 @@ export function Header() {
       if (user) {
         const { data: prof } = await supabase
           .from('profiles')
-          .select('display_name, referral_code, avatar_url, verification_status')
+          .select('display_name, referral_code, avatar_url, verification_status, trust_level')
           .eq('user_id', user.id)
           .maybeSingle();
         setProfile(prof);
@@ -239,7 +239,7 @@ export function Header() {
                       )}
                     </div>
                   </div>
-                  {profile?.verification_status === 'approved' && (
+                  {(profile?.verification_status === 'approved' || profile?.verification_status === 'verified' || profile?.trust_level === 'custech_verified') && (
                     <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   )}
                 </div>

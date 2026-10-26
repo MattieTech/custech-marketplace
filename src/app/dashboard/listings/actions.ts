@@ -30,12 +30,27 @@ export async function checkListingEligibility(): Promise<EligibilityResult> {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('verification_status, display_name')
+    .select('verification_status, trust_level, display_name')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  const status = profile?.verification_status || 'unverified';
-  const isVerified = status === 'verified' || status === 'approved';
+  let status = profile?.verification_status || 'unverified';
+  let isVerified = status === 'verified' || status === 'approved' || profile?.trust_level === 'custech_verified';
+
+  if (!isVerified) {
+    const { data: request } = await supabase
+      .from('verification_requests')
+      .select('verification_status')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (request?.verification_status === 'approved' || request?.verification_status === 'verified') {
+      isVerified = true;
+      status = 'approved';
+    }
+  }
 
   return {
     authenticated: true,

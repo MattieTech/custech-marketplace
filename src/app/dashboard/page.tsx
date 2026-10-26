@@ -18,16 +18,26 @@ export default async function DashboardPage() {
     listingsRes,
     escrowOrdersRes,
     recentListingsRes,
+    verificationReqRes,
   ] = await Promise.all([
     supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('listings').select('id, view_count, status').or(`user_id.eq.${user.id},seller_id.eq.${user.id}`),
     supabase.from('escrow_orders').select('id, status').or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`),
-    supabase.from('listings').select('id, title, price, listing_images(url), created_at, status').or(`user_id.eq.${user.id},seller_id.eq.${user.id}`).order('created_at', { ascending: false }).limit(4)
+    supabase.from('listings').select('id, title, price, listing_images(url), created_at, status').or(`user_id.eq.${user.id},seller_id.eq.${user.id}`).order('created_at', { ascending: false }).limit(4),
+    supabase.from('verification_requests').select('verification_status').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
   ]);
 
   const profile = profileRes.data;
   const displayName = profile?.display_name || user.email?.split('@')[0] || 'Student'
-  const isVerified = profile?.verification_status === 'approved' || profile?.is_verified || false
+  const isVerified = 
+    profile?.verification_status === 'approved' || 
+    profile?.verification_status === 'verified' || 
+    profile?.trust_level === 'custech_verified' || 
+    profile?.trust_level === 'trusted_seller' || 
+    Boolean(profile?.is_verified) || 
+    verificationReqRes.data?.verification_status === 'approved' ||
+    verificationReqRes.data?.verification_status === 'verified' ||
+    false;
 
   const activeListingsCount = listingsRes.data?.filter(l => l.status === 'active').length || 0;
   const totalViewsCount = listingsRes.data?.reduce((acc, l) => acc + (l.view_count || (l as any).views || 0), 0) || 0;

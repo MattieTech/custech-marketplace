@@ -67,7 +67,7 @@ export default async function FreeItemsPage(props: FreeItemsPageProps) {
     const userIds = [...new Set(freeItems.map((item: any) => item.seller_id || item.user_id).filter(Boolean))];
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('user_id, display_name, avatar_url, is_verified, trust_level')
+      .select('user_id, display_name, avatar_url, verification_status, trust_level')
       .in('user_id', userIds);
 
     const profileMap = (profiles || []).reduce((acc: any, p: any) => {
@@ -75,11 +75,17 @@ export default async function FreeItemsPage(props: FreeItemsPageProps) {
       return acc;
     }, {});
 
-    freeItems = freeItems.map((item: any) => ({
-      ...item,
-      seller: profileMap[item.seller_id || item.user_id] || null,
-      images: item.listing_images?.map((img: any) => img.url) || [],
-    }));
+    freeItems = freeItems.map((item: any) => {
+      const sellerProfile = profileMap[item.seller_id || item.user_id] || null;
+      return {
+        ...item,
+        seller: sellerProfile ? {
+          ...sellerProfile,
+          is_verified: sellerProfile.verification_status === 'approved' || sellerProfile.verification_status === 'verified' || sellerProfile.trust_level === 'custech_verified' || !!sellerProfile.is_verified,
+        } : null,
+        images: item.listing_images?.map((img: any) => img.url) || [],
+      };
+    });
   }
 
   return (

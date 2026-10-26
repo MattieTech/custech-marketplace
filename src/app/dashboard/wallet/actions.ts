@@ -130,7 +130,7 @@ export async function searchRecipient(query: string): Promise<{ success: boolean
     if (isUuid) {
       const { data } = await adminClient
         .from('profiles')
-        .select('user_id, display_name, department, matric_number, avatar_url, is_verified, referral_code')
+        .select('user_id, display_name, department, matric_number, avatar_url, verification_status, trust_level, referral_code')
         .eq('user_id', cleanQuery)
         .maybeSingle();
       match = data;
@@ -140,7 +140,7 @@ export async function searchRecipient(query: string): Promise<{ success: boolean
     if (!match) {
       const { data } = await adminClient
         .from('profiles')
-        .select('user_id, display_name, department, matric_number, avatar_url, is_verified, referral_code')
+        .select('user_id, display_name, department, matric_number, avatar_url, verification_status, trust_level, referral_code')
         .ilike('referral_code', cleanQuery)
         .maybeSingle();
       match = data;
@@ -150,7 +150,7 @@ export async function searchRecipient(query: string): Promise<{ success: boolean
     if (!match) {
       const { data } = await adminClient
         .from('profiles')
-        .select('user_id, display_name, department, matric_number, avatar_url, is_verified, referral_code')
+        .select('user_id, display_name, department, matric_number, avatar_url, verification_status, trust_level, referral_code')
         .ilike('matric_number', cleanQuery)
         .maybeSingle();
       match = data;
@@ -160,7 +160,7 @@ export async function searchRecipient(query: string): Promise<{ success: boolean
     if (!match) {
       const { data } = await adminClient
         .from('profiles')
-        .select('user_id, display_name, department, matric_number, avatar_url, is_verified, referral_code')
+        .select('user_id, display_name, department, matric_number, avatar_url, verification_status, trust_level, referral_code')
         .ilike('username', cleanQuery)
         .maybeSingle();
       match = data;
@@ -182,7 +182,7 @@ export async function searchRecipient(query: string): Promise<{ success: boolean
         department: match.department || null,
         matricNumber: match.matric_number ? `${match.matric_number.slice(0, 4)}****` : null,
         avatarUrl: match.avatar_url || null,
-        isVerified: !!match.is_verified,
+        isVerified: match.verification_status === 'approved' || match.verification_status === 'verified' || match.trust_level === 'custech_verified' || Boolean((match as any).is_verified),
         referralCode: match.referral_code || null,
       },
     };

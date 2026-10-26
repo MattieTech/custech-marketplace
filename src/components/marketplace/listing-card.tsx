@@ -106,7 +106,7 @@ export function ListingCard({ listing }: ListingCardProps) {
               <span className="text-xs text-slate-700 font-medium truncate flex-1">
                 {sellerName}
               </span>
-              {seller?.is_verified && (
+              {(seller?.is_verified || seller?.verification_status === 'approved' || seller?.verification_status === 'verified' || seller?.trust_level === 'custech_verified') && (
                 <TrustBadge className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               )}
             </div>

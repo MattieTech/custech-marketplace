@@ -20,6 +20,7 @@ import {
   Bookmark,
   AlertTriangle,
   ArrowRight,
+  Clock,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
@@ -39,11 +40,48 @@ export default function DashboardLayout({
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle();
-        setUser({ ...user, profile });
+        
+        let isUserVerified = 
+          profile?.verification_status === 'approved' ||
+          profile?.verification_status === 'verified' ||
+          profile?.trust_level === 'custech_verified' ||
+          profile?.trust_level === 'trusted_seller' ||
+          Boolean(profile?.is_verified);
+
+        let vStatus = profile?.verification_status || 'unverified';
+
+        if (!isUserVerified) {
+          const { data: request } = await supabase
+            .from('verification_requests')
+            .select('verification_status, payment_status')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (request?.verification_status === 'approved' || request?.verification_status === 'verified') {
+            isUserVerified = true;
+            vStatus = 'approved';
+          } else if (request?.payment_status === 'success' || request?.verification_status === 'under_review') {
+            vStatus = 'under_review';
+          }
+        }
+
+        setUser({ ...user, profile, isVerified: isUserVerified, verificationStatus: vStatus });
       }
     };
     getUser();
   }, [supabase]);
+
+  const isVerified = Boolean(
+    user?.isVerified ||
+    user?.profile?.verification_status === 'approved' ||
+    user?.profile?.verification_status === 'verified' ||
+    user?.profile?.trust_level === 'custech_verified' ||
+    user?.profile?.trust_level === 'trusted_seller' ||
+    user?.profile?.is_verified
+  );
+  const isUnderReview = user?.verificationStatus === 'under_review' || user?.profile?.verification_status === 'under_review';
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -106,10 +144,15 @@ export default function DashboardLayout({
                     {user.profile?.display_name || 'Campus Student'}
                   </p>
                   <div className="flex items-center gap-1 mt-0.5">
-                    {user.profile?.is_verified ? (
+                    {isVerified ? (
                       <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-emerald-50 border border-emerald-200 text-[9px] font-semibold text-emerald-700">
                         <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
                         <span>Verified</span>
+                      </span>
+                    ) : isUnderReview ? (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-amber-50 border border-amber-200 text-[9px] font-semibold text-amber-700">
+                        <Clock className="w-2.5 h-2.5 text-amber-600" />
+                        <span>Under Review</span>
                       </span>
                     ) : (
                       <span className="text-[10px] text-slate-400 font-medium">
@@ -193,27 +236,50 @@ export default function DashboardLayout({
 
         {/* Dashboard Page Body with Safe Bottom Padding */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-32 sm:pb-16 max-w-7xl w-full mx-auto space-y-6">
-          {user && user.profile && !user.profile.is_verified && (
-            <div className="rounded-2xl bg-amber-50 border border-amber-200/80 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-amber-600 mt-0.5 sm:mt-0">
-                  <AlertTriangle className="w-5 h-5" />
+          {user && !isVerified && pathname !== '/dashboard/verification' && (
+            isUnderReview ? (
+              <div className="rounded-2xl bg-blue-50 border border-blue-200/80 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0 text-blue-600 mt-0.5 sm:mt-0">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-blue-900 tracking-tight">Student Verification Under Review</h3>
+                    <p className="text-xs text-blue-700 mt-0.5 font-medium leading-relaxed">
+                      Your CUSTECH student credentials and verification have been received. Campus verification officers are currently reviewing your documents.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-black text-amber-900 tracking-tight">Student Account Not Verified</h3>
-                  <p className="text-xs text-amber-700 mt-0.5 font-medium leading-relaxed">
-                    Verify your CUSTECH matriculation credentials to unlock the verified badge, post unlimited listings, and use buyer/seller escrow protection.
-                  </p>
-                </div>
+                <Link
+                  href="/dashboard/verification"
+                  className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors"
+                >
+                  <span>Check Status</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
-              <Link
-                href="/dashboard/verification"
-                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-colors"
-              >
-                <span>Verify Now</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+            ) : (
+              <div className="rounded-2xl bg-amber-50 border border-amber-200/80 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-amber-600 mt-0.5 sm:mt-0">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-amber-900 tracking-tight">Student Account Not Verified</h3>
+                    <p className="text-xs text-amber-700 mt-0.5 font-medium leading-relaxed">
+                      Verify your CUSTECH matriculation credentials to unlock the verified badge, post unlimited listings, and use buyer/seller escrow protection.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/dashboard/verification"
+                  className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-colors"
+                >
+                  <span>Verify Now</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            )
           )}
           {children}
         </main>
