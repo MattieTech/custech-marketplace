@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
           .from('verification_requests')
           .select('payment_status')
           .eq('payment_reference', reference)
-          .single();
+          .maybeSingle();
 
         if (existingReq?.payment_status === 'success') {
           return NextResponse.json({ message: 'Already processed' }, { status: 200 });

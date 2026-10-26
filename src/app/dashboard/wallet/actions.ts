@@ -212,8 +212,8 @@ export async function sendP2PTransfer(
       return { success: false, error: 'Invalid recipient specified' };
     }
 
-    if (!amountNaira || isNaN(amountNaira) || amountNaira <= 0) {
-      return { success: false, error: 'Transfer amount must be greater than ₦0' };
+    if (!amountNaira || !Number.isFinite(amountNaira) || amountNaira <= 0 || amountNaira > 10_000_000) {
+      return { success: false, error: 'Transfer amount must be a valid number between ₦1 and ₦10,000,000' };
     }
 
     const adminClient = await createAdminClient();
@@ -261,8 +261,8 @@ export async function initializeWalletFunding(
       return { success: false, error: 'Unauthorized' };
     }
 
-    if (!amountNaira || amountNaira < 100) {
-      return { success: false, error: 'Minimum wallet funding amount is ₦100' };
+    if (!amountNaira || !Number.isFinite(amountNaira) || amountNaira < 100 || amountNaira > 10_000_000) {
+      return { success: false, error: 'Funding amount must be between ₦100 and ₦10,000,000' };
     }
 
     const amountKobo = Math.round(amountNaira * 100);
@@ -306,8 +306,8 @@ export async function requestWithdrawal(
       return { success: false, error: 'Unauthorized' };
     }
 
-    if (!amountNaira || amountNaira < 1000) {
-      return { success: false, error: 'Minimum withdrawal amount is ₦1,000' };
+    if (!amountNaira || !Number.isFinite(amountNaira) || amountNaira < 1000 || amountNaira > 10_000_000) {
+      return { success: false, error: 'Withdrawal amount must be between ₦1,000 and ₦10,000,000' };
     }
 
     const adminClient = await createAdminClient();
@@ -359,13 +359,22 @@ export async function requestWithdrawal(
         return { success: false, error: 'Insufficient wallet balance for this withdrawal amount.' };
       }
 
-      const newBalanceKobo = Number(wallet.balance) - amountKobo;
+      const currentBalance = Number(wallet.balance);
+      const newBalanceKobo = currentBalance - amountKobo;
 
-      // Debit wallet in Kobo
-      await adminClient
+      // Debit wallet in Kobo with optimistic concurrency guard to prevent race conditions
+      const { data: updatedWallet, error: updateErr } = await adminClient
         .from('wallets')
         .update({ balance: newBalanceKobo, updated_at: new Date().toISOString() })
-        .eq('id', wallet.id);
+        .eq('id', wallet.id)
+        .eq('balance', currentBalance)
+        .gte('balance', amountKobo)
+        .select('id')
+        .maybeSingle();
+
+      if (updateErr || !updatedWallet) {
+        return { success: false, error: 'Could not process withdrawal due to concurrent wallet updates. Please try again.' };
+      }
 
       // Record pending withdrawal transaction in Kobo
       await adminClient

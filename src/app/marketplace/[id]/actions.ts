@@ -287,6 +287,18 @@ export async function verifyMeetupHandshakeAction(listingId: string, inputPin: s
 
     const sellerId = listing.seller_id || listing.user_id;
 
+    if (sellerId !== user.id) {
+      return { success: false, error: 'Only the seller can verify the handshake handover for this listing.' };
+    }
+
+    if (listing.status === 'sold') {
+      return { success: false, error: 'This listing has already been marked as sold and verified.' };
+    }
+
+    if (listing.status !== 'active') {
+      return { success: false, error: 'This listing is no longer active for handshake verification.' };
+    }
+
     // Check PIN matching
     const seed = listingId.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
     const expectedPin = String((seed % 9000) + 1000);

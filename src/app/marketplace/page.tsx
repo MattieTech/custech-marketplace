@@ -44,10 +44,16 @@ async function getListings(searchParams: any) {
     }
   }
   if (searchParams.minPrice) {
-    query = query.gte('price', parseInt(searchParams.minPrice));
+    const minNaira = parseFloat(searchParams.minPrice);
+    if (Number.isFinite(minNaira) && minNaira >= 0) {
+      query = query.gte('price', Math.round(minNaira * 100));
+    }
   }
   if (searchParams.maxPrice) {
-    query = query.lte('price', parseInt(searchParams.maxPrice));
+    const maxNaira = parseFloat(searchParams.maxPrice);
+    if (Number.isFinite(maxNaira) && maxNaira >= 0) {
+      query = query.lte('price', Math.round(maxNaira * 100));
+    }
   }
   if (searchParams.condition) {
     const rawConditions = searchParams.condition.split(',');

@@ -154,7 +154,7 @@ export async function getUserConversations() {
             id: profile.user_id || profile.id,
             display_name: profile.display_name || 'Campus Student',
             avatar_url: profile.avatar_url || '',
-            trust_badge: profile.verification_status === 'approved' ? 'Verified Student' : '',
+            trust_badge: (profile.verification_status === 'approved' || profile.verification_status === 'verified' || profile.trust_level === 'custech_verified') ? 'Verified Student' : '',
             department: profile.department || '',
           };
         }
