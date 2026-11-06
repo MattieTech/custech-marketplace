@@ -29,7 +29,8 @@ import {
   ShoppingBag,
   TrendingUp,
   Wallet,
-  LayoutDashboard
+  LayoutDashboard,
+  Users
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -305,6 +306,18 @@ export function Header() {
                 </Link>
 
                 <Link
+                  href="/housing/roommates"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800 transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Users className="w-4 h-4 text-indigo-600" />
+                    <span>Find Roommates (Split Rent)</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+
+                <Link
                   href="/businesses"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-800 transition-colors"
@@ -525,6 +538,7 @@ export function Header() {
                 { href: '/marketplace', label: 'Marketplace' },
                 { href: '/services', label: 'Services' },
                 { href: '/housing', label: 'Housing' },
+                { href: '/housing/roommates', label: 'Roommates' },
                 { href: '/businesses', label: 'Businesses' },
                 { href: '/deals', label: 'Deals' },
                 { href: '/scam-check', label: 'ScamCheck' },

@@ -6,43 +6,38 @@ import { CustechLogoLoader } from '@/components/ui/custech-loader';
 import { ShieldCheck } from 'lucide-react';
 
 export function AppStartupSplash() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [statusMessage, setStatusMessage] = useState('Initializing CUSTECH Marketplace...');
+  const [showSplash, setShowSplash] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('Welcome to CUSTECH Marketplace');
 
   useEffect(() => {
-    // Orchestrated status progression over exactly 8 seconds (8000ms)
-    const t1 = setTimeout(() => {
-      setStatusMessage('Connecting to Confluence University Network (Osara)...');
-    }, 1800);
+    // Only show once per browser session
+    try {
+      const alreadySeen = sessionStorage.getItem('custech_splash_seen');
+      if (alreadySeen) {
+        setShowSplash(false);
+        return;
+      }
+    } catch {}
 
-    const t2 = setTimeout(() => {
-      setStatusMessage('Verifying Student Escrow & Safe Campus Trade Zones...');
-    }, 3600);
+    setShowSplash(true);
 
-    const t3 = setTimeout(() => {
-      setStatusMessage('Loading Verified Campus Listings, Hostels & Services...');
-    }, 5400);
-
-    const t4 = setTimeout(() => {
-      setStatusMessage('Welcome to CUSTECH Marketplace');
-    }, 7000);
-
-    // Automatically complete and dissolve at exactly 8 seconds (8000ms)
     const tEnd = setTimeout(() => {
       setShowSplash(false);
-    }, 8000);
+      try {
+        sessionStorage.setItem('custech_splash_seen', '1');
+      } catch {}
+    }, 1200);
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
       clearTimeout(tEnd);
     };
   }, []);
 
   const handleSkip = () => {
     setShowSplash(false);
+    try {
+      sessionStorage.setItem('custech_splash_seen', '1');
+    } catch {}
   };
 
   if (!showSplash) return null;
@@ -80,12 +75,12 @@ export function AppStartupSplash() {
               loop={true}
             />
 
-            {/* 8-second progress bar */}
+            {/* Fast 1.2-second smooth progress bar */}
             <div className="w-56 sm:w-72 h-1.5 bg-gray-100 rounded-full overflow-hidden mt-7 shadow-inner">
               <motion.div
                 initial={{ width: '0%' }}
                 animate={{ width: '100%' }}
-                transition={{ duration: 8, ease: 'linear' }}
+                transition={{ duration: 1.2, ease: 'easeInOut' }}
                 className="h-full bg-gradient-to-r from-green-600 via-emerald-500 to-green-600 rounded-full shadow-sm"
               />
             </div>

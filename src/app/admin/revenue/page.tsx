@@ -19,6 +19,11 @@ export default async function RevenuePage() {
     .from('transactions')
     .select('amount, platform_fee')
     .eq('status', 'completed');
+
+  const { data: completedEscrows } = await adminClient
+    .from('escrow_orders')
+    .select('amount, metadata')
+    .eq('status', 'completed');
     
   const { data: referrals } = await adminClient
     .from('referrals')
@@ -26,8 +31,17 @@ export default async function RevenuePage() {
     .eq('reward_status', 'paid');
 
   const verificationRev = verifications?.reduce((acc, curr) => acc + (curr.amount_paid || 0), 0) || 0;
-  const transactionVol = transactions?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
-  const platformFees = transactions?.reduce((acc, curr) => acc + (curr.platform_fee || 0), 0) || 0;
+  const legacyTxVol = transactions?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
+  const legacyFees = transactions?.reduce((acc, curr) => acc + (curr.platform_fee || 0), 0) || 0;
+
+  const escrowVol = (completedEscrows || []).reduce((acc: number, curr: any) => acc + Number(curr.amount || 0), 0);
+  const escrowCommission = (completedEscrows || []).reduce((acc: number, curr: any) => {
+    const fee = curr.metadata?.platform_fee ? Number(curr.metadata.platform_fee) : Math.round(Number(curr.amount || 0) * 0.05);
+    return acc + fee;
+  }, 0);
+
+  const transactionVol = legacyTxVol + escrowVol;
+  const platformFees = legacyFees + escrowCommission;
   const referralCosts = referrals?.reduce((acc, curr) => acc + (curr.reward_amount || 0), 0) || 0;
   
   const netRevenue = verificationRev + platformFees - referralCosts;
@@ -65,6 +79,19 @@ export default async function RevenuePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-900">{formatPrice(transactionVol)}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">5% Sales Commission</CardTitle>
+            <div className="p-2 rounded-full bg-emerald-50">
+              <DollarSign className="h-4 w-4 text-emerald-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{formatPrice(platformFees)}</div>
+            <p className="text-[11px] text-slate-400 mt-1">Platform fee on goods sold</p>
           </CardContent>
         </Card>
         

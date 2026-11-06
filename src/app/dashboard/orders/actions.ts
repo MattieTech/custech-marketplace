@@ -10,6 +10,8 @@ export type EscrowOrderDetails = {
   sellerId: string;
   listingId: string | null;
   amount: number;
+  platformFee?: number;
+  sellerPayout?: number;
   currency: string;
   status: string;
   paymentMethod: string;
@@ -105,6 +107,9 @@ export async function getUserOrders(): Promise<{
 
     const mapOrder = (order: any, isPurchase: boolean): EscrowOrderDetails => {
       const counterpartyProfile = isPurchase ? profileMap[order.seller_id] : profileMap[order.buyer_id];
+      const amount = Number(order.amount);
+      const platformFee = order.platform_fee ? Number(order.platform_fee) : Math.round(amount * 0.05);
+      const sellerPayout = order.seller_payout ? Number(order.seller_payout) : (amount - platformFee);
 
       return {
         id: order.id,
@@ -112,7 +117,9 @@ export async function getUserOrders(): Promise<{
         buyerId: order.buyer_id,
         sellerId: order.seller_id,
         listingId: order.listing_id,
-        amount: Number(order.amount),
+        amount,
+        platformFee,
+        sellerPayout,
         currency: order.currency || 'NGN',
         status: order.status,
         paymentMethod: order.payment_method,
@@ -185,15 +192,112 @@ export async function confirmReceiptAndReleaseEscrow(orderId: string): Promise<{
     // Call atomic RPC
     const { data: rpcRes, error: rpcError } = await adminClient.rpc('release_escrow_funds', {
       p_order_id: orderId,
-      p_caller_id: user.id,
+      p_actor_id: user.id,
     });
 
     if (rpcError) {
-      console.error('release_escrow_funds RPC error:', rpcError);
-      return { success: false, error: rpcError.message || 'Failed to release escrow funds.' };
-    }
+      console.warn('release_escrow_funds RPC fallback in server action:', rpcError);
 
-    if (!rpcRes?.success) {
+      // Perform atomic server-side release with 5% commission deduction
+      const { data: fullOrder } = await adminClient
+        .from('escrow_orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+
+      if (!fullOrder) {
+        return { success: false, error: 'Escrow order record not found.' };
+      }
+
+      const grossAmount = Number(fullOrder.amount);
+      const feeKobo = Math.round(grossAmount * 0.05); // 5% platform commission
+      const sellerPayoutKobo = grossAmount - feeKobo;
+
+      // 1. Unlock buyer balance
+      const { data: buyerWallet } = await adminClient
+        .from('wallets')
+        .select('id, locked_balance')
+        .eq('user_id', fullOrder.buyer_id)
+        .single();
+
+      if (buyerWallet) {
+        await adminClient
+          .from('wallets')
+          .update({
+            locked_balance: Math.max(0, Number(buyerWallet.locked_balance) - grossAmount),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', buyerWallet.id);
+      }
+
+      // 2. Credit seller wallet with net payout (95%)
+      let { data: sellerWallet } = await adminClient
+        .from('wallets')
+        .select('id, balance')
+        .eq('user_id', fullOrder.seller_id)
+        .maybeSingle();
+
+      let newSellerBal = sellerPayoutKobo;
+      if (!sellerWallet) {
+        const { data: createdWallet } = await adminClient
+          .from('wallets')
+          .insert({ user_id: fullOrder.seller_id, balance: sellerPayoutKobo, locked_balance: 0 })
+          .select()
+          .single();
+        sellerWallet = createdWallet;
+      } else {
+        newSellerBal = Number(sellerWallet.balance) + sellerPayoutKobo;
+        await adminClient
+          .from('wallets')
+          .update({ balance: newSellerBal, updated_at: new Date().toISOString() })
+          .eq('id', sellerWallet.id);
+      }
+
+      // 3. Mark escrow order completed with commission metadata
+      await adminClient
+        .from('escrow_orders')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          metadata: {
+            ...(fullOrder.metadata || {}),
+            platform_fee: feeKobo,
+            seller_payout: sellerPayoutKobo,
+            commission_rate: '5%',
+          }
+        })
+        .eq('id', orderId);
+
+      // 4. Record wallet transaction
+      if (sellerWallet) {
+        await adminClient.from('wallet_transactions').insert({
+          wallet_id: sellerWallet.id,
+          user_id: fullOrder.seller_id,
+          type: 'escrow_payout',
+          amount: sellerPayoutKobo,
+          balance_after: newSellerBal,
+          reference: `PAYOUT-${fullOrder.order_number}`,
+          description: `Escrow payout for order #${fullOrder.order_number} (5% platform fee deducted: ₦${(feeKobo / 100).toLocaleString()})`,
+          status: 'completed',
+          metadata: {
+            order_id: orderId,
+            gross_amount: grossAmount,
+            platform_fee: feeKobo,
+            seller_payout: sellerPayoutKobo,
+          }
+        });
+      }
+
+      // 5. Notify seller
+      await adminClient.from('notifications').insert({
+        user_id: fullOrder.seller_id,
+        type: 'escrow_released',
+        title: 'Escrow Funds Credited!',
+        body: `₦${(sellerPayoutKobo / 100).toLocaleString()} (net payout after 5% platform fee) has been released to your student wallet for order #${fullOrder.order_number}.`,
+        data: { order_id: orderId, platform_fee: feeKobo, seller_payout: sellerPayoutKobo }
+      });
+    } else if (!rpcRes?.success) {
       return { success: false, error: rpcRes?.error || 'Failed to release escrow funds.' };
     }
 

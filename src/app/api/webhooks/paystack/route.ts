@@ -53,14 +53,19 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Invalid amount for verification' }, { status: 400 });
         }
 
-        // Idempotency check
+        // Idempotency & record verification check
         const { data: existingReq } = await supabase
           .from('verification_requests')
-          .select('payment_status')
+          .select('id, payment_status, user_id')
           .eq('payment_reference', reference)
           .maybeSingle();
 
-        if (existingReq?.payment_status === 'success') {
+        if (!existingReq || existingReq.user_id !== userId) {
+          console.error('Webhook verification mismatch: no request found for reference or user mismatch', { reference, userId });
+          return NextResponse.json({ error: 'Matching verification request not found' }, { status: 400 });
+        }
+
+        if (existingReq.payment_status === 'success') {
           return NextResponse.json({ message: 'Already processed' }, { status: 200 });
         }
 
@@ -98,6 +103,12 @@ export async function POST(req: NextRequest) {
           });
       } else if (type === 'wallet_funding') {
         const amountKobo = Math.round(Number(amount));
+
+        if (!Number.isFinite(amountKobo) || amountKobo <= 0 || amountKobo > 1_000_000_000) {
+          console.error('Invalid wallet funding amount received in webhook:', { amount, amountKobo, reference });
+          return NextResponse.json({ error: 'Invalid funding amount' }, { status: 400 });
+        }
+
         const nairaAmount = Math.round(amountKobo / 100);
 
         // Try atomic credit_wallet_balance RPC with kobo

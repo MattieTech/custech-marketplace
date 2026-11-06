@@ -156,10 +156,15 @@ export async function createMarketplaceListing(formData: FormData) {
     let priceInKobo = 0;
     if (safeType === 'product') {
       const parsed = parseFloat(rawPrice);
-      if (isNaN(parsed) || parsed <= 0) {
-        return { success: false, error: 'Please enter a valid price greater than ?0.' };
+      if (isNaN(parsed) || parsed <= 0 || parsed > 100_000_000) {
+        return { success: false, error: 'Please enter a valid price between ₦1 and ₦100,000,000.' };
       }
       priceInKobo = Math.round(parsed * 100);
+    } else if (safeType === 'need' && rawPrice) {
+      const parsed = parseFloat(rawPrice);
+      if (!isNaN(parsed) && parsed > 0 && parsed <= 100_000_000) {
+        priceInKobo = Math.round(parsed * 100);
+      }
     }
 
     const conditionMap: Record<string, string> = {
@@ -268,8 +273,8 @@ export async function createHousingListing(formData: FormData) {
     }
 
     const rentYear = parseFloat(rawRent);
-    if (isNaN(rentYear) || rentYear <= 0) {
-      return { success: false, error: 'Please provide a valid rent amount per year.' };
+    if (isNaN(rentYear) || rentYear <= 0 || rentYear > 100_000_000) {
+      return { success: false, error: 'Please provide a valid rent amount per year (between ₦1 and ₦100,000,000).' };
     }
 
     const adminClient = await createAdminClient();
@@ -390,8 +395,8 @@ export async function createServiceListing(formData: FormData) {
     }
 
     const priceNum = parseFloat(rawPrice);
-    if (isNaN(priceNum) || priceNum <= 0) {
-      return { success: false, error: 'Please provide a valid starting price.' };
+    if (isNaN(priceNum) || priceNum <= 0 || priceNum > 100_000_000) {
+      return { success: false, error: 'Please provide a valid starting price (between ₦1 and ₦100,000,000).' };
     }
 
     const adminClient = await createAdminClient();

@@ -116,6 +116,16 @@ export async function registerUserAction(input: RegisterUserInput) {
       return { success: false, error: 'Username must be at least 5 alphanumeric characters or underscores.' };
     }
 
+    const RESERVED_USERNAMES = new Set([
+      'admin', 'administrator', 'custech', 'support', 'help', 'api', 
+      'dashboard', 'moderator', 'official', 'security', 'scamcheck', 
+      'marketplace', 'staff', 'system', 'root', 'verified', 'custechmarket'
+    ]);
+
+    if (RESERVED_USERNAMES.has(username)) {
+      return { success: false, error: 'This username is reserved by the platform. Please choose another.' };
+    }
+
     if (!email || !email.includes('@')) {
       return { success: false, error: 'Please enter a valid email address.' };
     }

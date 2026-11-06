@@ -1,9 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PlusCircle, MessageSquare, ShieldCheck, ShoppingBag, Eye, Package, ArrowRight, Clock } from 'lucide-react'
+import { PlusCircle, MessageSquare, ShieldCheck, ShoppingBag, Eye, Package, ArrowRight, Clock, Wallet } from 'lucide-react'
 import { formatPrice, formatDate } from '@/lib/utils'
+import { DashboardWalletQuickCard } from '@/components/dashboard/dashboard-wallet-quick-card'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -19,13 +20,35 @@ export default async function DashboardPage() {
     escrowOrdersRes,
     recentListingsRes,
     verificationReqRes,
+    walletRes,
+    pendingSellerOrdersRes,
   ] = await Promise.all([
     supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('listings').select('id, view_count, status').or(`user_id.eq.${user.id},seller_id.eq.${user.id}`),
     supabase.from('escrow_orders').select('id, status').or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`),
     supabase.from('listings').select('id, title, price, listing_images(url), created_at, status').or(`user_id.eq.${user.id},seller_id.eq.${user.id}`).order('created_at', { ascending: false }).limit(4),
     supabase.from('verification_requests').select('verification_status').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('wallets').select('*').eq('user_id', user.id).maybeSingle(),
+    supabase.from('escrow_orders').select('amount').eq('seller_id', user.id).in('status', ['funded', 'in_transit', 'delivered']),
   ]);
+
+  let wallet = walletRes.data;
+  if (!wallet) {
+    try {
+      const adminClient = await createAdminClient();
+      const { data: newWallet } = await adminClient
+        .from('wallets')
+        .insert({ user_id: user.id, balance: 0, locked_balance: 0 })
+        .select('*')
+        .maybeSingle();
+      wallet = newWallet;
+    } catch (err) {
+      console.warn('Auto wallet create notice in dashboard:', err);
+    }
+  }
+
+  const walletBalance = Number(wallet?.balance || 0);
+  const pendingEscrow = (pendingSellerOrdersRes.data || []).reduce((acc: number, curr: any) => acc + Number(curr.amount || 0), 0);
 
   const profile = profileRes.data;
   const displayName = profile?.display_name || user.email?.split('@')[0] || 'Student'
@@ -59,6 +82,17 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-black text-slate-900 tracking-tight">Welcome back, {displayName}!</h1>
         <p className="text-sm text-slate-500 mt-1 font-medium">Here is the real-time summary of your marketplace activity.</p>
       </div>
+
+      {/* Real-time Student Wallet & Instant Actions */}
+      <DashboardWalletQuickCard
+        initialBalance={walletBalance}
+        initialPendingEscrow={pendingEscrow}
+        bankDetails={{
+          bankName: profile?.bank_name || null,
+          accountNumber: profile?.account_number || null,
+          accountName: profile?.account_name || null,
+        }}
+      />
 
       <div>
         <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">

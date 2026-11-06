@@ -1001,25 +1001,42 @@ BEGIN
     END IF;
 
     SELECT id, balance INTO v_seller_wallet_id, v_seller_balance FROM wallets WHERE user_id = v_order.seller_id FOR UPDATE;
-    IF v_seller_wallet_id IS NULL THEN
-      INSERT INTO wallets (user_id, balance, locked_balance) VALUES (v_order.seller_id, v_order.amount, 0)
-      RETURNING id, balance INTO v_seller_wallet_id, v_seller_balance;
-    ELSE
-      UPDATE wallets SET balance = balance + v_order.amount, updated_at = NOW() WHERE id = v_seller_wallet_id
-      RETURNING balance INTO v_seller_balance;
-    END IF;
+    
+    -- Commission Calculation (5% platform fee, rounded)
+    DECLARE
+      v_fee BIGINT := ROUND(v_order.amount * 0.05);
+      v_seller_payout BIGINT := v_order.amount - v_fee;
+    BEGIN
+      IF v_fee < 0 THEN
+        v_fee := 0;
+        v_seller_payout := v_order.amount;
+      END IF;
 
-    UPDATE escrow_orders SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = p_order_id;
+      IF v_seller_wallet_id IS NULL THEN
+        INSERT INTO wallets (user_id, balance, locked_balance) VALUES (v_order.seller_id, v_seller_payout, 0)
+        RETURNING id, balance INTO v_seller_wallet_id, v_seller_balance;
+      ELSE
+        UPDATE wallets SET balance = balance + v_seller_payout, updated_at = NOW() WHERE id = v_seller_wallet_id
+        RETURNING balance INTO v_seller_balance;
+      END IF;
 
-    INSERT INTO wallet_transactions (wallet_id, user_id, type, amount, balance_after, reference, description, status, metadata)
-    VALUES (v_seller_wallet_id, v_order.seller_id, 'escrow_payout', v_order.amount, v_seller_balance, 'PAYOUT_' || v_order.order_number, 'Escrow payout for order #' || v_order.order_number, 'completed', jsonb_build_object('order_id', p_order_id));
+      UPDATE escrow_orders 
+      SET status = 'completed', 
+          completed_at = NOW(), 
+          updated_at = NOW(),
+          metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('platform_fee', v_fee, 'seller_payout', v_seller_payout, 'commission_rate', '5%')
+      WHERE id = p_order_id;
 
-    UPDATE profiles SET completed_transactions = completed_transactions + 1 WHERE user_id IN (v_order.buyer_id, v_order.seller_id);
+      INSERT INTO wallet_transactions (wallet_id, user_id, type, amount, balance_after, reference, description, status, metadata)
+      VALUES (v_seller_wallet_id, v_order.seller_id, 'escrow_payout', v_seller_payout, v_seller_balance, 'PAYOUT_' || v_order.order_number, 'Escrow payout for order #' || v_order.order_number || ' (5% platform commission deducted: ₦' || (v_fee / 100)::text || ')', 'completed', jsonb_build_object('order_id', p_order_id, 'gross_amount', v_order.amount, 'platform_fee', v_fee, 'seller_payout', v_seller_payout));
 
-    INSERT INTO notifications (user_id, type, title, body, data)
-    VALUES (v_order.seller_id, 'escrow_released', 'Escrow Funds Credited!', '₦' || (v_order.amount / 100)::text || ' has been released and credited to your student wallet for order #' || v_order.order_number || '.', jsonb_build_object('order_id', p_order_id));
+      UPDATE profiles SET completed_transactions = completed_transactions + 1 WHERE user_id IN (v_order.buyer_id, v_order.seller_id);
 
-    RETURN jsonb_build_object('success', true, 'order_status', 'completed', 'seller_balance', v_seller_balance);
+      INSERT INTO notifications (user_id, type, title, body, data)
+      VALUES (v_order.seller_id, 'escrow_released', 'Escrow Funds Credited!', '₦' || (v_seller_payout / 100)::text || ' (net payout after 5% platform fee) has been released to your student wallet for order #' || v_order.order_number || '.', jsonb_build_object('order_id', p_order_id, 'platform_fee', v_fee, 'seller_payout', v_seller_payout));
+
+      RETURN jsonb_build_object('success', true, 'order_status', 'completed', 'seller_balance', v_seller_balance, 'platform_fee', v_fee, 'seller_payout', v_seller_payout);
+    END;
 END;
 $$;
 GRANT EXECUTE ON FUNCTION release_escrow_funds(UUID, UUID) TO authenticated, service_role;

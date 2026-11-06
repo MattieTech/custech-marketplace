@@ -38,13 +38,10 @@ export async function createAdminClient() {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!serviceKey) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('CRITICAL SECURITY ERROR: SUPABASE_SERVICE_ROLE_KEY is required for administrative operations in production.')
-    }
-    console.warn('[SECURITY WARNING]: SUPABASE_SERVICE_ROLE_KEY is missing. Administrative operations may fail RLS policies.')
+    throw new Error('CRITICAL SECURITY ERROR: SUPABASE_SERVICE_ROLE_KEY is required for administrative operations.')
   }
 
-  const key = serviceKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-service-key'
+  const key = serviceKey
 
   return createServerClient(
     url,

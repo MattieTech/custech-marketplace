@@ -50,17 +50,36 @@ export default function ProfilePage() {
     if (!e.target.files || e.target.files.length === 0) return
     const file = e.target.files[0]
     
+    // Strict security check: limit to images under 5MB
+    const ALLOWED_MIMES: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+    const mime = (file.type || '').toLowerCase();
+    const safeExt = ALLOWED_MIMES[mime];
+
+    if (!safeExt) {
+      toast.error('Only image files (JPEG, PNG, WebP) are allowed.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Avatar image must not exceed 5MB.');
+      return;
+    }
+
     try {
       setSaving(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not logged in')
 
-      const fileExt = file.name.split('.').pop()
-      const filePath = `${user.id}/avatar.${fileExt}`
+      const filePath = `${user.id}/avatar-${Date.now()}.${safeExt}`
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { upsert: true })
+        .upload(filePath, file, { upsert: true, contentType: mime })
 
       if (uploadError) throw uploadError
 

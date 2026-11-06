@@ -293,11 +293,18 @@ export default function OrdersPage() {
                         ) : (
                           <p className="font-bold text-sm text-slate-900">Campus Marketplace Item</p>
                         )}
-                        <p className="text-base font-black text-emerald-600 mt-0.5">
-                          {formatPrice(order.amount)}
-                        </p>
+                        <div className="flex items-baseline gap-2 mt-0.5">
+                          <p className="text-base font-black text-emerald-600">
+                            {formatPrice(order.amount)}
+                          </p>
+                          {!isPurchase && order.sellerPayout && (
+                            <span className="text-[11px] font-semibold text-slate-500">
+                              (Net Payout: <strong className="text-emerald-700">{formatPrice(order.sellerPayout)}</strong> after 5% commission)
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[11px] text-slate-400 capitalize">
-                          Paid via {order.paymentMethod} escrow
+                          Paid via {order.paymentMethod} escrow {order.platformFee ? `• Platform fee: ${formatPrice(order.platformFee)}` : ''}
                         </p>
                       </div>
                     </div>
@@ -420,8 +427,10 @@ export default function OrdersPage() {
               Are you sure you have physically inspected this item and tested it to your satisfaction?
               <br /><br />
               <strong>Warning:</strong> Releasing escrow funds instantly credits{' '}
-              <span className="text-emerald-700 font-bold">{releasingOrder ? formatPrice(releasingOrder.amount) : ''}</span>{' '}
-              to the seller's wallet and marks this transaction as complete. This action cannot be reversed.
+              <span className="text-emerald-700 font-bold">
+                {releasingOrder?.sellerPayout ? formatPrice(releasingOrder.sellerPayout) : (releasingOrder ? formatPrice(releasingOrder.amount) : '')}
+              </span>{' '}
+              (net payout after 5% platform fee) to the seller's wallet and marks this transaction as complete. This action cannot be reversed.
             </DialogDescription>
           </DialogHeader>
 

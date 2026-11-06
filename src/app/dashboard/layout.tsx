@@ -93,6 +93,7 @@ export default function DashboardLayout({
     { name: 'My Listings', href: '/dashboard/listings', icon: ShoppingBag },
     { name: 'Orders & Escrow', href: '/dashboard/orders', icon: Package },
     { name: 'Saved Items', href: '/dashboard/saved', icon: Bookmark },
+    { name: 'Find Roommates', href: '/housing/roommates', icon: Users },
     { name: 'Analytics', href: '/dashboard/analytics', icon: TrendingUp },
     { name: 'Messages', href: '/messages', icon: MessageCircle },
     { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },

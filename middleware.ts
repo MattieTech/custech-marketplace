@@ -10,6 +10,10 @@ export async function middleware(request: NextRequest) {
   // Add security headers
   supabaseResponse.headers.set('X-Content-Type-Options', 'nosniff')
   supabaseResponse.headers.set('X-Frame-Options', 'DENY')
+  supabaseResponse.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://assets.paystack.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.paystack.co https://generativelanguage.googleapis.com; frame-src 'self' https://checkout.paystack.com https://standard.paystack.co;"
+  )
   supabaseResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   supabaseResponse.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()')
   supabaseResponse.headers.set('X-XSS-Protection', '1; mode=block')

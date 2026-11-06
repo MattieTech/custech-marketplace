@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { PageContainer } from '@/components/layout/page-container';
 import { HousingCard, HousingProperty } from '@/components/housing/housing-card';
 import { createClient } from '@/lib/supabase/server';
-import { Search, Home, ShieldCheck, MapPin, SlidersHorizontal, PlusCircle } from 'lucide-react';
+import { Search, Home, ShieldCheck, MapPin, SlidersHorizontal, PlusCircle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { sanitizeSearchQuery } from '@/lib/utils';
 
@@ -147,12 +147,21 @@ export default async function HousingPage({
             </p>
           </div>
 
-          <Link href="/dashboard/properties/new">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-2xl gap-2 shadow-md">
-              <PlusCircle className="w-4 h-4" />
-              <span>List Hostel or Room</span>
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <Link href="/housing/roommates">
+              <Button variant="outline" className="border-indigo-200 text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 font-bold text-xs sm:text-sm rounded-2xl gap-2 shadow-xs">
+                <Users className="w-4 h-4 text-indigo-600" />
+                <span>Find Roommate (Split Rent)</span>
+              </Button>
+            </Link>
+
+            <Link href="/dashboard/properties/new">
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-2xl gap-2 shadow-md">
+                <PlusCircle className="w-4 h-4" />
+                <span>List Hostel or Room</span>
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Search and Filters Strip */}
